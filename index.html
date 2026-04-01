@@ -2,132 +2,107 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Taskoria Pixel Studio — 64x64 RPG Editor</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Taskoria Pixel Mapper - Tablet & Stylus Ready</title>
 <style>
     :root {
-        --bg-color: #0c0d12;
+        --bg-color: #121212;
         --panel-bg: #1a1a2e;
-        --border-color: #000;
-        --accent-color: #f0c040;
-        --text-color: #eee;
-        --grid-size: 64;
-        --pixel-size: 10px; /* Tamaño visual de cada píxel en el editor */
+        --accent: #f0c040;
     }
 
     body {
         background-color: var(--bg-color);
-        color: var(--text-color);
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        margin: 0;
+        color: var(--accent);
+        font-family: 'Courier New', monospace;
         display: flex;
         flex-direction: column;
         align-items: center;
         min-height: 100vh;
+        margin: 0;
+        padding: 20px;
+        box-sizing: border-box;
     }
 
-    header {
-        margin: 20px 0;
+    h1 { 
+        margin-bottom: 20px; 
+        font-size: clamp(14px, 4vw, 24px); /* Texto responsive */
+        text-transform: uppercase; 
+        letter-spacing: 3px; 
         text-align: center;
     }
 
-    h1 {
-        font-size: 1.2rem;
-        color: var(--accent-color);
-        text-transform: uppercase;
-        letter-spacing: 3px;
-        margin: 0;
-    }
-
-    p.subtitle {
-        font-size: 0.8rem;
-        color: #aaa;
-        margin: 5px 0 0 0;
-    }
-
-    #main-layout {
+    #mapper-container {
         display: flex;
         gap: 20px;
-        padding: 20px;
-        max-width: 1400px;
         width: 100%;
+        max-width: 1200px;
         justify-content: center;
+        align-items: flex-start;
     }
 
-    /* Paneles laterales */
-    .panel {
+    /* Contenedor de la Imagen y Cuadrícula - AHORA RESPONSIVE */
+    #image-wrapper {
+        position: relative;
+        width: 100%;
+        max-width: 800px; /* Tamaño máximo en PC */
+        aspect-ratio: 1 / 1; /* Mantiene el cuadrado perfecto siempre */
+        border: 4px solid #000;
+        cursor: crosshair;
+        /* CRUCIAL PARA LÁPIZ/TÁCTIL: Evita que la pantalla se mueva al dibujar */
+        touch-action: none; 
+        background-color: #222;
+    }
+
+    #source-image {
+        width: 100%;
+        height: 100%;
+        display: block;
+        object-fit: cover;
+        opacity: 0.5; /* Opacidad para ver bien lo que pintamos encima */
+    }
+
+    #grid-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: grid;
+        grid-template-columns: repeat(64, 1fr);
+        grid-template-rows: repeat(64, 1fr);
+    }
+
+    .grid-cell {
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        box-sizing: border-box;
+        /* Transición suave al pintar */
+        transition: background-color 0.1s; 
+    }
+
+    /* Panel de Información y Herramientas */
+    #info-panel {
+        width: 100%;
+        max-width: 300px;
         background-color: var(--panel-bg);
-        border: 2px solid #333;
-        border-radius: 8px;
+        border: 2px solid #5d6d7e;
         padding: 20px;
-        width: 250px;
+        box-sizing: border-box;
         display: flex;
         flex-direction: column;
         gap: 15px;
+        flex-shrink: 0; /* Evita que el panel se encoja en PC */
     }
 
-    .panel-title {
-        font-size: 0.9rem;
-        color: var(--accent-color);
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 10px;
-        border-bottom: 1px solid #444;
-        padding-bottom: 5px;
-    }
+    #info-panel div { font-size: 14px; }
+    .label { color: #aaa; margin-right: 5px; }
+    .value { font-weight: bold; }
 
-    /* El Lienzo del Editor */
-    #canvas-container {
-        position: relative;
-        /* El tamaño total es grid-size * pixel-size */
-        width: calc(var(--grid-size) * var(--pixel-size));
-        height: calc(var(--grid-size) * var(--pixel-size));
-        background-color: #12121e; /* Fondo ligero del lienzo */
-        border: 4px solid #000;
-        box-shadow: 0 0 30px rgba(0,0,0,0.5);
-        image-rendering: pixelated; /* Crucial para pixel art */
-        overflow: hidden;
-        cursor: crosshair;
-    }
-
-    #pixel-grid {
-        display: grid;
-        grid-template-columns: repeat(var(--grid-size), 1fr);
-        grid-template-rows: repeat(var(--grid-size), 1fr);
-        width: 100%;
-        height: 100%;
-    }
-
-    .px {
-        width: 100%;
-        height: 100%;
-        box-sizing: border-box;
-        /* Opcional: una rejilla tenue para ayudar a dibujar */
-        outline: 1px solid rgba(255, 255, 255, 0.03);
-    }
-
-    /* Herramientas y Paleta */
-    #palette {
-        display: grid;
-        grid-template-columns: repeat(5, 1fr);
-        gap: 8px;
-    }
-
-    .swatch {
-        width: 100%;
-        padding-top: 100%; /* Cuadrado perfecto */
-        border: 2px solid transparent;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: transform 0.1s;
-    }
-
-    .swatch:hover { transform: scale(1.1); }
-    .swatch.active { border-color: var(--accent-color); transform: scale(1.1); box-shadow: 0 0 10px rgba(240, 192, 64, 0.5); }
-    .swatch.eraser { background-color: #333; position: relative; }
-    .swatch.eraser::after { content: 'X'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 14px; font-weight: bold; }
-
-    #custom-color-container {
+    /* Selector de color para dibujar */
+    .tool-section {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid #444;
         display: flex;
         align-items: center;
         gap: 10px;
@@ -141,239 +116,114 @@
         background: none;
     }
 
-    /* Acciones */
-    .action-btn {
-        background-color: var(--accent-color);
-        color: #0c0d12;
+    button {
+        background: var(--accent);
+        color: #000;
         border: none;
-        padding: 12px;
-        border-radius: 4px;
-        font-weight: bold;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        cursor: pointer;
-        transition: background 0.2s;
-        font-size: 0.8rem;
-    }
-
-    .action-btn:hover { background-color: #fff; }
-    .action-btn.secondary { background-color: #333; color: #fff; }
-    .action-btn.secondary:hover { background-color: #444; }
-
-    /* Salida de Código */
-    #code-output {
-        width: 100%;
-        height: 400px;
-        background-color: #0a0a0c;
-        border: 1px solid #444;
-        color: #8bc34a; /* Color de código */
-        font-family: 'Courier New', Courier, monospace;
-        font-size: 0.7rem;
         padding: 10px;
-        box-sizing: border-box;
+        font-weight: bold;
+        cursor: pointer;
         border-radius: 4px;
-        resize: none;
-        overflow: auto;
+        width: 100%;
     }
 
+    /* MEDIA QUERY PARA TABLETAS Y MÓVILES */
+    @media (max-width: 850px) {
+        #mapper-container {
+            flex-direction: column; /* Apila el panel debajo del lienzo */
+            align-items: center;
+        }
+        #info-panel {
+            max-width: 100%; /* El panel ocupa todo el ancho disponible */
+        }
+    }
 </style>
 </head>
 <body>
 
-<header>
-    <h1>Taskoria Pixel Studio</h1>
-    <p class="subtitle">Editor Profesional de RPG Sprites (64x64)</p>
-</header>
+<h1>Taskoria: Mapper & Stylus Draw</h1>
 
-<div id="main-layout">
-    
-    <aside class="panel">
-        <div class="panel-title">Herramientas</div>
-        <div id="palette">
-            <div class="swatch active" style="background-color: #000000;" data-color="#000000" title="Contorno"></div>
-            <div class="swatch" style="background-color: #ffdbac;" data-color="#ffdbac" title="Piel"></div>
-            <div class="swatch" style="background-color: #e4e7ec;" data-color="#e4e7ec" title="Metal Luz"></div>
-            <div class="swatch" style="background-color: #bdc3c7;" data-color="#bdc3c7" title="Metal Medio"></div>
-            <div class="swatch" style="background-color: #7f8c8d;" data-color="#7f8c8d" title="Metal Sombra"></div>
-            <div class="swatch" style="background-color: #567194;" data-color="#567194" title="Azul Capucha Luz"></div>
-            <div class="swatch" style="background-color: #3a4e69;" data-color="#3a4e69" title="Azul Capucha Medio"></div>
-            <div class="swatch" style="background-color: #253347;" data-color="#253347" title="Azul Capucha Sombra"></div>
-            <div class="swatch" style="background-color: #c0392b;" data-color="#c0392b" title="Rojo Túnica"></div>
-            <div class="swatch" style="background-color: #8a2be2;" data-color="#8a2be2" title="Morado Mago"></div>
-            <div class="swatch" style="background-color: #5d4037;" data-color="#5d4037" title="Cuero"></div>
-            <div class="swatch" style="background-color: #f1c40f;" data-color="#f1c40f" title="Oro"></div>
-            <div class="swatch" style="background-color: #ffffff;" data-color="#ffffff" title="Blanco"></div>
-            
-            <div class="swatch eraser" data-color="transparent" title="Borrador"></div>
-        </div>
+<div id="mapper-container">
+    <div id="image-wrapper">
+        <img src="freepik_genera-sprites-pixel-art-8bit-personajes-rpgmedieval-inspirados-en-dragones-mazmorras-sin-fondo-minimalista_0001.jpg" id="source-image" alt="Referencia">
+        <div id="grid-overlay"></div>
+    </div>
+
+    <div id="info-panel">
+        <div><span class="label">Total Cuadros:</span><span class="value">4096 (64x64)</span></div>
+        <div><span class="label">Cuadro actual:</span><span id="current-index" class="value">-</span></div>
+        <div><span class="label">Coordenadas:</span><span id="current-coords" class="value">-</span></div>
         
-        <div id="custom-color-container">
-            <input type="color" id="custom-color-picker" value="#ff0000">
-            <span style="font-size: 0.8rem; color: #aaa;">Color personalizado</span>
+        <div class="tool-section">
+            <input type="color" id="paint-color" value="#f0c040">
+            <span class="label">Color de Lápiz</span>
         </div>
 
-        <button class="action-btn secondary" id="clear-btn">Limpiar Lienzo</button>
-    </aside>
-
-    <main id="canvas-container">
-        <div id="pixel-grid">
-            </div>
-    </main>
-
-    <aside class="panel" style="width: 400px;">
-        <div class="panel-title">Código Generado</div>
-        <button class="action-btn" id="generate-btn">Generar Código</button>
-        <p style="font-size: 0.7rem; color: #aaa; margin: 0;">Copia este JSON para usar tu dibujo en Taskoria:</p>
-        <textarea id="code-output" readonly placeholder="El código aparecerá aquí..."></textarea>
-    </aside>
-
+        <button id="clear-btn">Borrar Dibujo</button>
+    </div>
 </div>
 
 <script>
-    const GRID_SIZE = 64;
-    const pixelGrid = document.getElementById('pixel-grid');
-    const palette = document.getElementById('palette');
-    const customColorPicker = document.getElementById('custom-color-picker');
+    const gridSize = 64;
+    const gridOverlay = document.getElementById('grid-overlay');
+    const currentIndex = document.getElementById('current-index');
+    const currentCoords = document.getElementById('current-coords');
+    const colorPicker = document.getElementById('paint-color');
     const clearBtn = document.getElementById('clear-btn');
-    const generateBtn = document.getElementById('generate-btn');
-    const codeOutput = document.getElementById('code-output');
 
-    let currentColor = "#000000"; // Color inicial
-    let isDrawing = false; // Estado para pintar al arrastrar
+    let isDrawing = false;
+    let cells = [];
 
-    const pixelBuffer = []; // Matriz interna de datos de color
+    // 1. GENERAR LA CUADRÍCULA
+    for (let i = 0; i < gridSize * gridSize; i++) {
+        const cell = document.createElement('div');
+        cell.classList.add('grid-cell');
+        cell.dataset.index = i; 
+        gridOverlay.appendChild(cell);
+        cells.push(cell);
 
-    // 1. INICIALIZAR EL LIENZO DE 64x64
-    function initGrid() {
-        pixelGrid.innerHTML = ''; // Limpiar si existe
-        for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
-            const px = document.createElement('div');
-            px.classList.add('px');
-            px.dataset.index = i; // Guardamos el índice único del píxel
-            
-            // Eventos de dibujo
-            px.addEventListener('mousedown', startDrawing);
-            px.addEventListener('mouseover', drawPixel);
-            
-            pixelGrid.appendChild(px);
-            pixelBuffer[i] = 'transparent'; // Inicializar buffer transparente
-        }
-    }
+        // Lógica para actualizar las coordenadas en el panel
+        const updateInfo = () => {
+            const x = i % gridSize;
+            const y = Math.floor(i / gridSize);
+            currentIndex.textContent = i;
+            currentCoords.textContent = `(${x}, ${y})`;
+        };
 
-    // 2. LÓGICA DE DIBUJO
-    function startDrawing(e) {
-        e.preventDefault(); // Evitar comportamientos extraños del navegador
-        isDrawing = true;
-        drawPixel(e); // Pintar el píxel inicial
-    }
+        // Lógica para pintar
+        const paint = () => {
+            cell.style.backgroundColor = colorPicker.value;
+        };
 
-    function stopDrawing() {
-        isDrawing = false;
-    }
-
-    function drawPixel(e) {
-        // Solo pintar si el botón del ratón está presionado o fue un clic
-        if (e.type === 'mouseover' && !isDrawing) return;
+        // EVENTOS POINTER (Soportan Ratón, Dedo y Lápiz Óptico)
         
-        const px = e.target;
-        if (!px.classList.contains('px')) return; // Asegurar que es un píxel
+        // Al entrar en la celda (arrastrando)
+        cell.addEventListener('pointerenter', (e) => {
+            updateInfo();
+            if (isDrawing) paint();
+        });
 
-        const index = px.dataset.index;
-        
-        // Pintar visualmente y en el buffer
-        px.style.backgroundColor = currentColor;
-        pixelBuffer[index] = currentColor;
+        // Al tocar/hacer clic en la celda
+        cell.addEventListener('pointerdown', (e) => {
+            isDrawing = true;
+            updateInfo();
+            paint();
+            // CRUCIAL: Liberar la captura del puntero permite que 'pointerenter' 
+            // se dispare en otras celdas mientras arrastras el lápiz o el dedo.
+            cell.releasePointerCapture(e.pointerId);
+        });
     }
 
-    // Eventos globales para detener el dibujo al soltar el ratón fuera
-    window.addEventListener('mouseup', stopDrawing);
+    // Detener el dibujo cuando se levanta el lápiz/dedo o se sale del área
+    window.addEventListener('pointerup', () => { isDrawing = false; });
+    window.addEventListener('pointercancel', () => { isDrawing = false; });
 
-    // 3. LÓGICA DE HERRAMIENTAS Y PALETA
-    palette.addEventListener('click', (e) => {
-        const swatch = e.target;
-        if (!swatch.classList.contains('swatch')) return;
-
-        // Actualizar UI
-        document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
-        swatch.classList.add('active');
-
-        // Actualizar color actual
-        currentColor = swatch.dataset.color;
-    });
-
-    // Selector de color personalizado
-    customColorPicker.addEventListener('input', (e) => {
-        currentColor = e.target.value;
-        // Desactivar swatches activos
-        document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
-    });
-
-    // Limpiar Lienzo
+    // Botón para limpiar
     clearBtn.addEventListener('click', () => {
-        if(confirm('¿Estás seguro de que quieres borrar todo tu dibujo?')) {
-            initGrid();
-            codeOutput.value = '';
-        }
+        cells.forEach(cell => cell.style.backgroundColor = 'transparent');
     });
-
-    // 4. GENERADOR DE CÓDIGO (BLUEPRINT JSON)
-    generateBtn.addEventListener('click', () => {
-        generateBtn.textContent = "Escaneando Matrix...";
-        
-        // Pequeño delay para feedback visual
-        setTimeout(() => {
-            const dynamicPalette = { ' ': 'transparent' };
-            const blueprintArray = [];
-            let charCodeBase = 'A'.charCodeAt(0);
-
-            // Escanear píxel por píxel
-            for (let y = 0; y < GRID_SIZE; y++) {
-                let rowStr = '';
-                for (let x = 0; x < GRID_SIZE; x++) {
-                    const index = y * GRID_SIZE + x;
-                    const color = pixelBuffer[index];
-
-                    if (color === 'transparent') {
-                        rowStr += ' '; // Espacio vacío
-                    } else {
-                        // Color existe. ¿Está en nuestra paleta dinámica?
-                        let char = '';
-                        for (const key in dynamicPalette) {
-                            if (dynamicPalette[key] === color) {
-                                char = key;
-                                break;
-                            }
-                        }
-
-                        if (char === '') {
-                            // Nuevo color, asignar una nueva letra
-                            char = String.fromCharCode(charCodeBase);
-                            dynamicPalette[char] = color;
-                            charCodeBase++;
-                            // Nota: Si usas más de 26 colores, este generador simple fallará,
-                            // pero para RPG sprites es suficiente.
-                        }
-                        rowStr += char;
-                    }
-                }
-                blueprintArray.push(rowStr);
-            }
-
-            // Crear el objeto JSON de salida
-            const outputData = {
-                paleta: dynamicPalette,
-                blueprint: blueprintArray
-            };
-
-            codeOutput.value = JSON.stringify(outputData, null, 2);
-            generateBtn.textContent = "Generar Código";
-            alert('¡Código generado con éxito! Cópialo del panel derecho.');
-        }, 500);
-    });
-
-    // Iniciar
-    initGrid();
 
 </script>
+
 </body>
 </html>
