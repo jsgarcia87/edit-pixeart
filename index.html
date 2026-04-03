@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Taskoria Pixel Studio - Tablet & Stylus Ready</title>
+<title>Taskoria Pixel Studio v2.0</title>
 <style>
     :root {
         --bg-color: #121212;
@@ -33,13 +33,7 @@
         text-align: center;
     }
 
-    p.subtitle {
-        color: #aaa;
-        font-size: 0.8rem;
-        margin-top: 0;
-        margin-bottom: 20px;
-        text-align: center;
-    }
+    p.subtitle { color: #aaa; font-size: 0.8rem; margin-top: 0; margin-bottom: 20px; text-align: center; }
 
     #main-layout {
         display: flex;
@@ -54,11 +48,11 @@
     #image-wrapper {
         position: relative;
         width: 100%;
-        max-width: 650px; /* Tamaño optimizado */
+        max-width: 650px;
         aspect-ratio: 1 / 1; 
         border: 4px solid #000;
         cursor: crosshair;
-        touch-action: none; /* EVITA EL SCROLL AL DIBUJAR */
+        touch-action: none;
         background-color: #12121e;
         box-shadow: 0 0 30px rgba(0,0,0,0.5);
     }
@@ -74,10 +68,7 @@
         grid-template-rows: repeat(64, 1fr);
     }
 
-    .grid-cell {
-        border: 1px solid rgba(255, 255, 255, 0.02);
-        box-sizing: border-box;
-    }
+    .grid-cell { border: 1px solid rgba(255, 255, 255, 0.02); box-sizing: border-box; }
 
     /* Paneles laterales */
     .panel {
@@ -101,124 +92,99 @@
         letter-spacing: 1px;
         border-bottom: 1px solid #444;
         padding-bottom: 5px;
+        display: flex;
+        justify-content: space-between;
     }
 
     /* Paleta de Colores */
-    #palette {
-        display: grid;
-        grid-template-columns: repeat(5, 1fr);
-        gap: 8px;
-    }
-
+    #palette { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
     .swatch {
-        width: 100%;
-        aspect-ratio: 1/1;
-        border: 2px solid transparent;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: transform 0.1s;
+        width: 100%; aspect-ratio: 1/1; border: 2px solid transparent;
+        border-radius: 4px; cursor: pointer; transition: transform 0.1s;
     }
-
     .swatch:hover { transform: scale(1.1); }
     .swatch.active { border-color: var(--accent); transform: scale(1.1); box-shadow: 0 0 10px rgba(240, 192, 64, 0.5); }
     .swatch.eraser { background-color: #333; position: relative; }
     .swatch.eraser::after { content: 'X'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 14px; font-weight: bold; }
 
-    .custom-color-row {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: 0.8rem;
-        color: #aaa;
-    }
+    .custom-color-row { display: flex; align-items: center; gap: 10px; font-size: 0.8rem; color: #aaa; }
+    input[type="color"] { border: none; width: 35px; height: 35px; cursor: pointer; background: none; }
 
-    input[type="color"] {
-        border: none;
-        width: 35px;
-        height: 35px;
-        cursor: pointer;
-        background: none;
-    }
-
-    /* Botones */
+    /* Botones y Formulario */
     .action-btn {
-        background-color: var(--accent);
-        color: #000;
-        border: none;
-        padding: 12px;
-        border-radius: 4px;
-        font-weight: bold;
-        text-transform: uppercase;
-        cursor: pointer;
-        transition: background 0.2s;
-        width: 100%;
+        background-color: var(--accent); color: #000; border: none; padding: 10px;
+        border-radius: 4px; font-weight: bold; text-transform: uppercase; cursor: pointer;
+        transition: background 0.2s; width: 100%; font-size: 0.8rem;
     }
-
     .action-btn:hover { background-color: #fff; }
     .action-btn.secondary { background-color: #333; color: #fff; }
     .action-btn.secondary:hover { background-color: #444; }
 
-    /* Salida de código */
-    #code-output {
-        width: 100%;
-        height: 300px;
-        background-color: #0a0a0c;
-        border: 1px solid #444;
-        color: #8bc34a;
-        font-family: 'Courier New', Courier, monospace;
-        font-size: 0.7rem;
-        padding: 10px;
-        box-sizing: border-box;
-        border-radius: 4px;
-        resize: none;
+    input[type="text"] {
+        width: 100%; padding: 8px; box-sizing: border-box; background: #0a0a0c;
+        border: 1px solid #444; color: #fff; border-radius: 4px; font-family: monospace;
     }
 
-    /* Responsive */
+    /* Galería de Sesión */
+    #session-gallery {
+        display: flex; flex-direction: column; gap: 8px; max-height: 150px; overflow-y: auto;
+    }
+    .gallery-item {
+        display: flex; justify-content: space-between; align-items: center;
+        background: #0a0a0c; padding: 8px; border-radius: 4px; border: 1px solid #333;
+    }
+    .gallery-item span { font-family: monospace; font-size: 0.8rem; color: #8bc34a; }
+    .gallery-actions button {
+        background: #333; color: white; border: none; padding: 4px 8px; border-radius: 2px;
+        cursor: pointer; font-size: 0.7rem; margin-left: 5px;
+    }
+    .gallery-actions button:hover { background: #555; }
+    .gallery-actions button.del:hover { background: #e74c3c; }
+
+    #code-output {
+        width: 100%; height: 200px; background-color: #0a0a0c; border: 1px solid #444;
+        color: #8bc34a; font-family: 'Courier New', Courier, monospace; font-size: 0.7rem;
+        padding: 10px; box-sizing: border-box; border-radius: 4px; resize: none;
+    }
+
     @media (max-width: 950px) {
-        #main-layout {
-            flex-direction: column;
-            align-items: center;
-        }
-        .panel {
-            max-width: 650px; /* Se estiran al ancho del lienzo en móviles */
-        }
+        #main-layout { flex-direction: column; align-items: center; }
+        .panel { max-width: 650px; }
     }
 </style>
 </head>
 <body>
 
 <header>
-    <h1>Taskoria Pixel Studio</h1>
-    <p class="subtitle">Responsive RPG Blueprint Generator (64x64)</p>
+    <h1>Taskoria Pixel Studio v2.0</h1>
+    <p class="subtitle">Multi-Character Session & Generator</p>
 </header>
 
 <div id="main-layout">
     
     <aside class="panel">
-        <div class="panel-title">Pinceles y Colores</div>
+        <div class="panel-title">Pinceles</div>
         <div id="palette">
-            <div class="swatch active" style="background-color: #000000;" data-color="#000000" title="Contorno Negro"></div>
-            <div class="swatch" style="background-color: #ffdbac;" data-color="#ffdbac" title="Piel"></div>
-            <div class="swatch" style="background-color: #567194;" data-color="#567194" title="Azul Capucha Luz"></div>
-            <div class="swatch" style="background-color: #3a4e69;" data-color="#3a4e69" title="Azul Capucha"></div>
-            <div class="swatch" style="background-color: #253347;" data-color="#253347" title="Azul Oscuro"></div>
-            <div class="swatch" style="background-color: #bdc3c7;" data-color="#bdc3c7" title="Metal"></div>
-            <div class="swatch" style="background-color: #7f8c8d;" data-color="#7f8c8d" title="Metal Oscuro"></div>
-            <div class="swatch" style="background-color: #ffffff;" data-color="#ffffff" title="Blanco"></div>
-            <div class="swatch" style="background-color: #5d4037;" data-color="#5d4037" title="Cuero Marrón"></div>
-            <div class="swatch" style="background-color: #f1c40f;" data-color="#f1c40f" title="Oro"></div>
-            <div class="swatch" style="background-color: #2e8b57;" data-color="#2e8b57" title="Verde Ranger"></div>
-            <div class="swatch" style="background-color: #8b0000;" data-color="#8b0000" title="Rojo Mago"></div>
-            <div class="swatch" style="background-color: #8a2be2;" data-color="#8a2be2" title="Morado"></div>
-            
-            <div class="swatch eraser" data-color="transparent" title="Borrador"></div>
+            <div class="swatch active" style="background-color: #000000;" data-color="#000000"></div>
+            <div class="swatch" style="background-color: #ffdbac;" data-color="#ffdbac"></div>
+            <div class="swatch" style="background-color: #567194;" data-color="#567194"></div>
+            <div class="swatch" style="background-color: #3a4e69;" data-color="#3a4e69"></div>
+            <div class="swatch" style="background-color: #253347;" data-color="#253347"></div>
+            <div class="swatch" style="background-color: #bdc3c7;" data-color="#bdc3c7"></div>
+            <div class="swatch" style="background-color: #7f8c8d;" data-color="#7f8c8d"></div>
+            <div class="swatch" style="background-color: #ffffff;" data-color="#ffffff"></div>
+            <div class="swatch" style="background-color: #5d4037;" data-color="#5d4037"></div>
+            <div class="swatch" style="background-color: #f1c40f;" data-color="#f1c40f"></div>
+            <div class="swatch" style="background-color: #2e8b57;" data-color="#2e8b57"></div>
+            <div class="swatch" style="background-color: #8b0000;" data-color="#8b0000"></div>
+            <div class="swatch" style="background-color: #8a2be2;" data-color="#8a2be2"></div>
+            <div class="swatch eraser" data-color="transparent"></div>
         </div>
 
         <div class="custom-color-row">
             <input type="color" id="custom-color" value="#ff0000">
-            <span>Añadir color personalizado</span>
+            <span>Color personalizado</span>
         </div>
-
         <button class="action-btn secondary" id="clear-btn">Limpiar Lienzo</button>
     </aside>
 
@@ -227,10 +193,22 @@
     </main>
 
     <aside class="panel">
-        <div class="panel-title">Exportar Blueprint JSON</div>
-        <button class="action-btn" id="generate-btn">Generar Código</button>
-        <p style="font-size: 0.7rem; color: #aaa; margin: 0;">Pulsa para compilar tu dibujo en el formato Taskoria:</p>
-        <textarea id="code-output" readonly placeholder="El código aparecerá aquí..."></textarea>
+        
+        <div class="panel-title">Guardar Personaje</div>
+        <input type="text" id="char-name" placeholder="Ej: arquero_verde">
+        <button class="action-btn" id="save-btn">Guardar en Sesión</button>
+        
+        <div class="panel-title" style="margin-top: 10px;">
+            <span>Sesión Actual</span>
+            <span id="session-count" style="color:#aaa;">0</span>
+        </div>
+        <div id="session-gallery">
+            <p style="font-size: 0.7rem; color: #666; text-align: center; margin: 0;">No hay sprites guardados.</p>
+        </div>
+
+        <div class="panel-title" style="margin-top: 10px;">Exportar JSON</div>
+        <button class="action-btn" id="generate-btn" style="background-color: #8bc34a;">Exportar Todo</button>
+        <textarea id="code-output" readonly placeholder="El código consolidado aparecerá aquí..."></textarea>
     </aside>
 
 </div>
@@ -241,17 +219,26 @@
     const palette = document.getElementById('palette');
     const customColorInput = document.getElementById('custom-color');
     const clearBtn = document.getElementById('clear-btn');
+    
+    // Elementos de la Sesión
+    const charNameInput = document.getElementById('char-name');
+    const saveBtn = document.getElementById('save-btn');
+    const sessionGallery = document.getElementById('session-gallery');
+    const sessionCount = document.getElementById('session-count');
     const generateBtn = document.getElementById('generate-btn');
     const codeOutput = document.getElementById('code-output');
 
     let currentColor = "#000000";
     let isDrawing = false;
     
-    // Matriz de memoria para guardar los códigos HEX exactos y no depender de los RGB del navegador
-    const pixelBuffer = new Array(gridSize * gridSize).fill('transparent');
+    // Matriz del lienzo actual
+    let pixelBuffer = new Array(gridSize * gridSize).fill('transparent');
     const cells = [];
 
-    // 1. GENERAR LA CUADRÍCULA CON POINTER EVENTS (Tablet Ready)
+    // BASE DE DATOS DE LA SESIÓN (Almacena múltiples personajes)
+    let sessionDrawings = {};
+
+    // 1. GENERAR LA CUADRÍCULA
     for (let i = 0; i < gridSize * gridSize; i++) {
         const cell = document.createElement('div');
         cell.classList.add('grid-cell');
@@ -261,32 +248,22 @@
 
         const paint = () => {
             cell.style.backgroundColor = currentColor;
-            pixelBuffer[i] = currentColor; // Guardar el HEX exacto
+            pixelBuffer[i] = currentColor;
         };
 
-        // Al entrar en la celda (arrastrando)
-        cell.addEventListener('pointerenter', (e) => {
-            if (isDrawing) paint();
-        });
-
-        // Al tocar/hacer clic en la celda
+        cell.addEventListener('pointerenter', () => { if (isDrawing) paint(); });
         cell.addEventListener('pointerdown', (e) => {
-            isDrawing = true;
-            paint();
-            // Permite seguir capturando eventos de otras celdas mientras arrastras
-            cell.releasePointerCapture(e.pointerId);
+            isDrawing = true; paint(); cell.releasePointerCapture(e.pointerId);
         });
     }
 
-    // Detener dibujo al soltar
     window.addEventListener('pointerup', () => { isDrawing = false; });
     window.addEventListener('pointercancel', () => { isDrawing = false; });
 
-    // 2. HERRAMIENTAS Y PALETA
+    // 2. PALETA
     palette.addEventListener('click', (e) => {
         const swatch = e.target;
         if (!swatch.classList.contains('swatch')) return;
-
         document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
         swatch.classList.add('active');
         currentColor = swatch.dataset.color;
@@ -297,33 +274,106 @@
         document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
     });
 
+    // Función auxiliar para refrescar el lienzo visualmente
+    function renderBufferToScreen() {
+        cells.forEach((cell, i) => {
+            cell.style.backgroundColor = pixelBuffer[i];
+        });
+    }
+
     clearBtn.addEventListener('click', () => {
-        if(confirm('¿Borrar todo el lienzo?')) {
-            cells.forEach(cell => cell.style.backgroundColor = 'transparent');
+        if(confirm('¿Limpiar el lienzo? (Lo que hayas guardado en sesión no se perderá)')) {
             pixelBuffer.fill('transparent');
-            codeOutput.value = '';
+            renderBufferToScreen();
         }
     });
 
-    // 3. GENERADOR DE CÓDIGO BLUEPRINT
-    generateBtn.addEventListener('click', () => {
+    // 3. GESTIÓN DE SESIÓN
+    function updateGalleryUI() {
+        const keys = Object.keys(sessionDrawings);
+        sessionCount.textContent = keys.length;
+        
+        if (keys.length === 0) {
+            sessionGallery.innerHTML = '<p style="font-size: 0.7rem; color: #666; text-align: center; margin: 0;">No hay sprites guardados.</p>';
+            return;
+        }
+
+        sessionGallery.innerHTML = '';
+        keys.forEach(name => {
+            const div = document.createElement('div');
+            div.className = 'gallery-item';
+            
+            const title = document.createElement('span');
+            title.textContent = name;
+
+            const actions = document.createElement('div');
+            actions.className = 'gallery-actions';
+
+            const loadBtn = document.createElement('button');
+            loadBtn.textContent = '✎';
+            loadBtn.title = 'Editar';
+            loadBtn.onclick = () => {
+                if(confirm('¿Cargar al lienzo? Perderás los cambios no guardados del lienzo actual.')) {
+                    pixelBuffer = [...sessionDrawings[name]]; // Clonar
+                    renderBufferToScreen();
+                    charNameInput.value = name;
+                }
+            };
+
+            const delBtn = document.createElement('button');
+            delBtn.textContent = 'X';
+            delBtn.className = 'del';
+            delBtn.onclick = () => {
+                delete sessionDrawings[name];
+                updateGalleryUI();
+            };
+
+            actions.appendChild(loadBtn);
+            actions.appendChild(delBtn);
+            
+            div.appendChild(title);
+            div.appendChild(actions);
+            sessionGallery.appendChild(div);
+        });
+    }
+
+    saveBtn.addEventListener('click', () => {
+        let name = charNameInput.value.trim();
+        if (!name) {
+            name = "sprite_" + (Object.keys(sessionDrawings).length + 1);
+            charNameInput.value = name;
+        }
+
+        // Comprobar si el lienzo está vacío
+        if(pixelBuffer.every(color => color === 'transparent')) {
+            alert("El lienzo está vacío. Dibuja algo antes de guardar.");
+            return;
+        }
+
+        // Guardar un clon del array actual en la sesión
+        sessionDrawings[name] = [...pixelBuffer];
+        updateGalleryUI();
+        
+        // Efecto visual de guardado
+        saveBtn.textContent = "¡Guardado!";
+        setTimeout(() => saveBtn.textContent = "Guardar en Sesión", 1500);
+    });
+
+    // 4. GENERADOR MULTI-PERSONAJE (EXPORTAR TODO)
+    // Transforma un buffer de colores en el objeto {paleta, blueprint}
+    function convertBufferToBlueprint(buffer) {
         const dynamicPalette = { " ": "transparent" };
         const blueprintArray = [];
-        let charCodeBase = 65; // Empieza en la letra 'A' (código ASCII 65)
+        let charCodeBase = 65; // Empieza en 'A'
 
-        // Escanear la matriz
         for (let y = 0; y < gridSize; y++) {
             let rowStr = '';
             for (let x = 0; x < gridSize; x++) {
-                const color = pixelBuffer[y * gridSize + x];
-
+                const color = buffer[y * gridSize + x];
                 if (color === 'transparent') {
-                    rowStr += ' '; // Espacio para transparencia
+                    rowStr += ' ';
                 } else {
-                    // Buscar si el color ya tiene una letra asignada
                     let char = Object.keys(dynamicPalette).find(k => dynamicPalette[k] === color);
-                    
-                    // Si no existe en la paleta actual, lo añadimos con una nueva letra
                     if (!char) {
                         char = String.fromCharCode(charCodeBase);
                         dynamicPalette[char] = color;
@@ -334,14 +384,28 @@
             }
             blueprintArray.push(rowStr);
         }
+        return { paleta: dynamicPalette, blueprint: blueprintArray };
+    }
 
-        // Crear JSON final
-        const outputJSON = {
-            paleta: dynamicPalette,
-            blueprint: blueprintArray
-        };
+    generateBtn.addEventListener('click', () => {
+        const finalExport = {};
+        const keys = Object.keys(sessionDrawings);
 
-        codeOutput.value = JSON.stringify(outputJSON, null, 2);
+        if (keys.length === 0) {
+            // Si no hay nada guardado, exportar al menos lo que haya en el lienzo
+            if(pixelBuffer.every(color => color === 'transparent')) {
+                 alert("No hay nada que exportar.");
+                 return;
+            }
+            finalExport["sprite_actual"] = convertBufferToBlueprint(pixelBuffer);
+        } else {
+            // Convertir todos los guardados en la sesión
+            keys.forEach(name => {
+                finalExport[name] = convertBufferToBlueprint(sessionDrawings[name]);
+            });
+        }
+
+        codeOutput.value = JSON.stringify(finalExport, null, 2);
     });
 
 </script>
