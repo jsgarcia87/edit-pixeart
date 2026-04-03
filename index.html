@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Taskoria Pixel Studio v3.0 - Trace Edition</title>
+<title>Taskoria Pixel Studio v4.0 - Advanced Trace</title>
 <style>
     :root {
         --bg-color: #121212;
@@ -55,22 +55,23 @@
         touch-action: none;
         background-color: #12121e;
         box-shadow: 0 0 30px rgba(0,0,0,0.5);
+        overflow: hidden; /* Corta la imagen de referencia si se sale de los bordes */
     }
 
-    /* NUEVO: Capa de Imagen de Referencia */
+    /* Capa de Imagen de Referencia Mejorada */
     #reference-layer {
         position: absolute;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background-size: 100% 100%; /* Estira la imagen para que encaje en el grid 1:1 */
-        background-position: center;
+        background-size: 100%; /* Tamaño por defecto */
+        background-position: 50% 50%; /* Centrado por defecto */
         background-repeat: no-repeat;
         opacity: 0.5;
-        pointer-events: none; /* Crucial: permite dibujar "a través" de la imagen */
+        pointer-events: none; 
         z-index: 1;
-        image-rendering: pixelated; /* Mantiene la referencia nítida si es pixel art */
+        image-rendering: pixelated; 
     }
 
     #grid-overlay {
@@ -82,7 +83,7 @@
         display: grid;
         grid-template-columns: repeat(64, 1fr);
         grid-template-rows: repeat(64, 1fr);
-        z-index: 2; /* Por encima de la imagen de referencia */
+        z-index: 2;
     }
 
     .grid-cell { border: 1px solid rgba(255, 255, 255, 0.02); box-sizing: border-box; }
@@ -127,33 +128,29 @@
     .custom-color-row { display: flex; align-items: center; gap: 10px; font-size: 0.8rem; color: #aaa; }
     input[type="color"] { border: none; width: 35px; height: 35px; cursor: pointer; background: none; }
 
-    /* Herramientas de Referencia */
+    /* Herramientas de Referencia Mejoradas */
     .reference-tools {
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 8px;
         background: #0a0a0c;
         padding: 10px;
         border-radius: 4px;
         border: 1px solid #333;
     }
 
-    .reference-tools input[type="file"] {
-        font-size: 0.7rem;
-        color: #aaa;
-    }
+    .reference-tools input[type="file"] { font-size: 0.7rem; color: #aaa; margin-bottom: 5px; }
 
     .slider-row {
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
         font-size: 0.7rem;
         color: #aaa;
     }
     
-    .slider-row input[type="range"] {
-        flex-grow: 1;
-    }
+    .slider-row label { width: 50px; }
+    .slider-row input[type="range"] { flex-grow: 1; }
 
     /* Botones y Formulario */
     .action-btn {
@@ -171,9 +168,7 @@
     }
 
     /* Galería de Sesión */
-    #session-gallery {
-        display: flex; flex-direction: column; gap: 8px; max-height: 150px; overflow-y: auto;
-    }
+    #session-gallery { display: flex; flex-direction: column; gap: 8px; max-height: 150px; overflow-y: auto; }
     .gallery-item {
         display: flex; justify-content: space-between; align-items: center;
         background: #0a0a0c; padding: 8px; border-radius: 4px; border: 1px solid #333;
@@ -201,8 +196,8 @@
 <body>
 
 <header>
-    <h1>Taskoria Pixel Studio v3.0</h1>
-    <p class="subtitle">Trace Reference & Multi-Character Generator</p>
+    <h1>Taskoria Pixel Studio v4.0</h1>
+    <p class="subtitle">Advanced Trace & Grid Positioning</p>
 </header>
 
 <div id="main-layout">
@@ -212,11 +207,25 @@
         <div class="panel-title">Guía de Referencia</div>
         <div class="reference-tools">
             <input type="file" id="bg-upload" accept="image/*">
+            
             <div class="slider-row">
-                <label for="bg-opacity">Opacidad:</label>
-                <input type="range" id="bg-opacity" min="0" max="1" step="0.1" value="0.5">
+                <label>Opacidad:</label>
+                <input type="range" id="bg-opacity" min="0" max="1" step="0.05" value="0.5">
             </div>
-            <button class="action-btn secondary" id="bg-clear" style="padding: 6px; font-size: 0.7rem;">Quitar Guía</button>
+            <div class="slider-row">
+                <label>Tamaño:</label>
+                <input type="range" id="bg-scale" min="10" max="1000" step="5" value="100">
+            </div>
+            <div class="slider-row">
+                <label>Eje X:</label>
+                <input type="range" id="bg-x" min="0" max="100" step="0.5" value="50">
+            </div>
+            <div class="slider-row">
+                <label>Eje Y:</label>
+                <input type="range" id="bg-y" min="0" max="100" step="0.5" value="50">
+            </div>
+
+            <button class="action-btn secondary" id="bg-clear" style="padding: 6px; font-size: 0.7rem; margin-top: 5px;">Quitar Guía</button>
         </div>
 
         <div class="panel-title" style="margin-top: 10px;">Pinceles</div>
@@ -245,13 +254,13 @@
     </aside>
 
     <main id="image-wrapper">
-        <div id="reference-layer"></div> <div id="grid-overlay"></div>
+        <div id="reference-layer"></div>
+        <div id="grid-overlay"></div>
     </main>
 
     <aside class="panel">
-        
         <div class="panel-title">Guardar Personaje</div>
-        <input type="text" id="char-name" placeholder="Ej: arquero_verde">
+        <input type="text" id="char-name" placeholder="Ej: ninja_oscuro">
         <button class="action-btn" id="save-btn">Guardar en Sesión</button>
         
         <div class="panel-title" style="margin-top: 10px;">
@@ -276,9 +285,12 @@
     const customColorInput = document.getElementById('custom-color');
     const clearBtn = document.getElementById('clear-btn');
     
-    // Elementos de la Referencia
+    // Controles de Referencia
     const bgUpload = document.getElementById('bg-upload');
     const bgOpacity = document.getElementById('bg-opacity');
+    const bgScale = document.getElementById('bg-scale');
+    const bgX = document.getElementById('bg-x');
+    const bgY = document.getElementById('bg-y');
     const refLayer = document.getElementById('reference-layer');
     const bgClear = document.getElementById('bg-clear');
 
@@ -292,33 +304,41 @@
 
     let currentColor = "#000000";
     let isDrawing = false;
-    
-    // Matriz del lienzo actual
     let pixelBuffer = new Array(gridSize * gridSize).fill('transparent');
     const cells = [];
-
-    // BASE DE DATOS DE LA SESIÓN
     let sessionDrawings = {};
 
-    // 0. LÓGICA DE LA IMAGEN DE REFERENCIA
+    // 0. LÓGICA DE LA IMAGEN DE REFERENCIA AVANZADA
+    function updateReferenceTransform() {
+        refLayer.style.opacity = bgOpacity.value;
+        refLayer.style.backgroundSize = `${bgScale.value}%`;
+        refLayer.style.backgroundPosition = `${bgX.value}% ${bgY.value}%`;
+    }
+
     bgUpload.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
             reader.onload = function(event) {
                 refLayer.style.backgroundImage = `url(${event.target.result})`;
+                // Resetear controles al cargar nueva imagen
+                bgScale.value = 100;
+                bgX.value = 50;
+                bgY.value = 50;
+                updateReferenceTransform();
             }
             reader.readAsDataURL(file);
         }
     });
 
-    bgOpacity.addEventListener('input', (e) => {
-        refLayer.style.opacity = e.target.value;
-    });
+    bgOpacity.addEventListener('input', updateReferenceTransform);
+    bgScale.addEventListener('input', updateReferenceTransform);
+    bgX.addEventListener('input', updateReferenceTransform);
+    bgY.addEventListener('input', updateReferenceTransform);
 
     bgClear.addEventListener('click', () => {
         refLayer.style.backgroundImage = 'none';
-        bgUpload.value = ''; // Resetear el input
+        bgUpload.value = ''; 
     });
 
     // 1. GENERAR LA CUADRÍCULA
@@ -357,7 +377,6 @@
         document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
     });
 
-    // Función auxiliar para refrescar el lienzo visualmente
     function renderBufferToScreen() {
         cells.forEach((cell, i) => {
             cell.style.backgroundColor = pixelBuffer[i];
@@ -365,7 +384,7 @@
     }
 
     clearBtn.addEventListener('click', () => {
-        if(confirm('¿Limpiar el dibujo actual? (Lo que hayas guardado en sesión no se perderá)')) {
+        if(confirm('¿Limpiar el dibujo actual?')) {
             pixelBuffer.fill('transparent');
             renderBufferToScreen();
         }
@@ -397,7 +416,7 @@
             loadBtn.title = 'Editar';
             loadBtn.onclick = () => {
                 if(confirm('¿Cargar al lienzo? Perderás los cambios no guardados del lienzo actual.')) {
-                    pixelBuffer = [...sessionDrawings[name]]; // Clonar
+                    pixelBuffer = [...sessionDrawings[name]]; 
                     renderBufferToScreen();
                     charNameInput.value = name;
                 }
@@ -413,7 +432,6 @@
 
             actions.appendChild(loadBtn);
             actions.appendChild(delBtn);
-            
             div.appendChild(title);
             div.appendChild(actions);
             sessionGallery.appendChild(div);
@@ -439,11 +457,11 @@
         setTimeout(() => saveBtn.textContent = "Guardar en Sesión", 1500);
     });
 
-    // 4. GENERADOR MULTI-PERSONAJE
+    // 4. GENERADOR
     function convertBufferToBlueprint(buffer) {
         const dynamicPalette = { " ": "transparent" };
         const blueprintArray = [];
-        let charCodeBase = 65; // Empieza en 'A'
+        let charCodeBase = 65; 
 
         for (let y = 0; y < gridSize; y++) {
             let rowStr = '';
