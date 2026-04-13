@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Taskoria Pixel Studio v4.0 - Advanced Trace</title>
+<title>Taskoria Pixel Studio v4.0 - Export Edition</title>
 <style>
     :root {
         --bg-color: #121212;
@@ -55,18 +55,17 @@
         touch-action: none;
         background-color: #12121e;
         box-shadow: 0 0 30px rgba(0,0,0,0.5);
-        overflow: hidden; /* Corta la imagen de referencia si se sale de los bordes */
+        overflow: hidden;
     }
 
-    /* Capa de Imagen de Referencia Mejorada */
     #reference-layer {
         position: absolute;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background-size: 100%; /* Tamaño por defecto */
-        background-position: 50% 50%; /* Centrado por defecto */
+        background-size: 100%;
+        background-position: 50% 50%;
         background-repeat: no-repeat;
         opacity: 0.5;
         pointer-events: none; 
@@ -128,7 +127,6 @@
     .custom-color-row { display: flex; align-items: center; gap: 10px; font-size: 0.8rem; color: #aaa; }
     input[type="color"] { border: none; width: 35px; height: 35px; cursor: pointer; background: none; }
 
-    /* Herramientas de Referencia Mejoradas */
     .reference-tools {
         display: flex;
         flex-direction: column;
@@ -152,7 +150,6 @@
     .slider-row label { width: 50px; }
     .slider-row input[type="range"] { flex-grow: 1; }
 
-    /* Botones y Formulario */
     .action-btn {
         background-color: var(--accent); color: #000; border: none; padding: 10px;
         border-radius: 4px; font-weight: bold; text-transform: uppercase; cursor: pointer;
@@ -167,7 +164,6 @@
         border: 1px solid #444; color: #fff; border-radius: 4px; font-family: monospace;
     }
 
-    /* Galería de Sesión */
     #session-gallery { display: flex; flex-direction: column; gap: 8px; max-height: 150px; overflow-y: auto; }
     .gallery-item {
         display: flex; justify-content: space-between; align-items: center;
@@ -182,9 +178,14 @@
     .gallery-actions button.del:hover { background: #e74c3c; }
 
     #code-output {
-        width: 100%; height: 200px; background-color: #0a0a0c; border: 1px solid #444;
+        width: 100%; height: 120px; background-color: #0a0a0c; border: 1px solid #444;
         color: #8bc34a; font-family: 'Courier New', Courier, monospace; font-size: 0.7rem;
         padding: 10px; box-sizing: border-box; border-radius: 4px; resize: none;
+    }
+
+    .export-group {
+        display: flex;
+        gap: 8px;
     }
 
     @media (max-width: 950px) {
@@ -197,35 +198,20 @@
 
 <header>
     <h1>Taskoria Pixel Studio v4.0</h1>
-    <p class="subtitle">Advanced Trace & Grid Positioning</p>
+    <p class="subtitle">Advanced Trace & Image Export</p>
 </header>
 
 <div id="main-layout">
     
     <aside class="panel">
-        
         <div class="panel-title">Guía de Referencia</div>
         <div class="reference-tools">
             <input type="file" id="bg-upload" accept="image/*">
-            
-            <div class="slider-row">
-                <label>Opacidad:</label>
-                <input type="range" id="bg-opacity" min="0" max="1" step="0.05" value="0.5">
-            </div>
-            <div class="slider-row">
-                <label>Tamaño:</label>
-                <input type="range" id="bg-scale" min="10" max="1000" step="5" value="100">
-            </div>
-            <div class="slider-row">
-                <label>Eje X:</label>
-                <input type="range" id="bg-x" min="0" max="100" step="0.5" value="50">
-            </div>
-            <div class="slider-row">
-                <label>Eje Y:</label>
-                <input type="range" id="bg-y" min="0" max="100" step="0.5" value="50">
-            </div>
-
-            <button class="action-btn secondary" id="bg-clear" style="padding: 6px; font-size: 0.7rem; margin-top: 5px;">Quitar Guía</button>
+            <div class="slider-row"><label>Opacidad:</label><input type="range" id="bg-opacity" min="0" max="1" step="0.05" value="0.5"></div>
+            <div class="slider-row"><label>Tamaño:</label><input type="range" id="bg-scale" min="10" max="1000" step="5" value="100"></div>
+            <div class="slider-row"><label>Eje X:</label><input type="range" id="bg-x" min="0" max="100" step="0.5" value="50"></div>
+            <div class="slider-row"><label>Eje Y:</label><input type="range" id="bg-y" min="0" max="100" step="0.5" value="50"></div>
+            <button class="action-btn secondary" id="bg-clear" style="padding: 6px; font-size: 0.7rem;">Quitar Guía</button>
         </div>
 
         <div class="panel-title" style="margin-top: 10px;">Pinceles</div>
@@ -260,20 +246,26 @@
 
     <aside class="panel">
         <div class="panel-title">Guardar Personaje</div>
-        <input type="text" id="char-name" placeholder="Ej: ninja_oscuro">
+        <input type="text" id="char-name" placeholder="Nombre del archivo...">
         <button class="action-btn" id="save-btn">Guardar en Sesión</button>
         
+        <div class="panel-title" style="margin-top: 10px;">Exportar Imagen</div>
+        <div class="export-group">
+            <button class="action-btn" id="export-png-btn" style="background-color: #2196F3;">PNG</button>
+            <button class="action-btn" id="export-svg-btn" style="background-color: #9c27b0;">SVG</button>
+        </div>
+
         <div class="panel-title" style="margin-top: 10px;">
             <span>Sesión Actual</span>
             <span id="session-count" style="color:#aaa;">0</span>
         </div>
         <div id="session-gallery">
-            <p style="font-size: 0.7rem; color: #666; text-align: center; margin: 0;">No hay sprites guardados.</p>
+            <p style="font-size: 0.7rem; color: #666; text-align: center; margin: 0;">Vacío.</p>
         </div>
 
         <div class="panel-title" style="margin-top: 10px;">Exportar JSON</div>
-        <button class="action-btn" id="generate-btn" style="background-color: #8bc34a;">Exportar Todo</button>
-        <textarea id="code-output" readonly placeholder="El código consolidado aparecerá aquí..."></textarea>
+        <button class="action-btn" id="generate-btn" style="background-color: #8bc34a;">Generar Código</button>
+        <textarea id="code-output" readonly placeholder="JSON aquí..."></textarea>
     </aside>
 
 </div>
@@ -285,7 +277,7 @@
     const customColorInput = document.getElementById('custom-color');
     const clearBtn = document.getElementById('clear-btn');
     
-    // Controles de Referencia
+    // Referencias
     const bgUpload = document.getElementById('bg-upload');
     const bgOpacity = document.getElementById('bg-opacity');
     const bgScale = document.getElementById('bg-scale');
@@ -294,13 +286,15 @@
     const refLayer = document.getElementById('reference-layer');
     const bgClear = document.getElementById('bg-clear');
 
-    // Elementos de la Sesión
+    // Sesión y Export
     const charNameInput = document.getElementById('char-name');
     const saveBtn = document.getElementById('save-btn');
     const sessionGallery = document.getElementById('session-gallery');
     const sessionCount = document.getElementById('session-count');
     const generateBtn = document.getElementById('generate-btn');
     const codeOutput = document.getElementById('code-output');
+    const exportPngBtn = document.getElementById('export-png-btn');
+    const exportSvgBtn = document.getElementById('export-svg-btn');
 
     let currentColor = "#000000";
     let isDrawing = false;
@@ -308,7 +302,7 @@
     const cells = [];
     let sessionDrawings = {};
 
-    // 0. LÓGICA DE LA IMAGEN DE REFERENCIA AVANZADA
+    // 0. LÓGICA DE REFERENCIA
     function updateReferenceTransform() {
         refLayer.style.opacity = bgOpacity.value;
         refLayer.style.backgroundSize = `${bgScale.value}%`;
@@ -321,27 +315,17 @@
             const reader = new FileReader();
             reader.onload = function(event) {
                 refLayer.style.backgroundImage = `url(${event.target.result})`;
-                // Resetear controles al cargar nueva imagen
-                bgScale.value = 100;
-                bgX.value = 50;
-                bgY.value = 50;
+                bgScale.value = 100; bgX.value = 50; bgY.value = 50;
                 updateReferenceTransform();
             }
             reader.readAsDataURL(file);
         }
     });
 
-    bgOpacity.addEventListener('input', updateReferenceTransform);
-    bgScale.addEventListener('input', updateReferenceTransform);
-    bgX.addEventListener('input', updateReferenceTransform);
-    bgY.addEventListener('input', updateReferenceTransform);
+    [bgOpacity, bgScale, bgX, bgY].forEach(el => el.addEventListener('input', updateReferenceTransform));
+    bgClear.addEventListener('click', () => { refLayer.style.backgroundImage = 'none'; bgUpload.value = ''; });
 
-    bgClear.addEventListener('click', () => {
-        refLayer.style.backgroundImage = 'none';
-        bgUpload.value = ''; 
-    });
-
-    // 1. GENERAR LA CUADRÍCULA
+    // 1. GENERAR CUADRÍCULA
     for (let i = 0; i < gridSize * gridSize; i++) {
         const cell = document.createElement('div');
         cell.classList.add('grid-cell');
@@ -361,9 +345,8 @@
     }
 
     window.addEventListener('pointerup', () => { isDrawing = false; });
-    window.addEventListener('pointercancel', () => { isDrawing = false; });
 
-    // 2. PALETA
+    // 2. PALETA Y HERRAMIENTAS
     palette.addEventListener('click', (e) => {
         const swatch = e.target;
         if (!swatch.classList.contains('swatch')) return;
@@ -378,13 +361,11 @@
     });
 
     function renderBufferToScreen() {
-        cells.forEach((cell, i) => {
-            cell.style.backgroundColor = pixelBuffer[i];
-        });
+        cells.forEach((cell, i) => { cell.style.backgroundColor = pixelBuffer[i]; });
     }
 
     clearBtn.addEventListener('click', () => {
-        if(confirm('¿Limpiar el dibujo actual?')) {
+        if(confirm('¿Limpiar lienzo?')) {
             pixelBuffer.fill('transparent');
             renderBufferToScreen();
         }
@@ -394,113 +375,85 @@
     function updateGalleryUI() {
         const keys = Object.keys(sessionDrawings);
         sessionCount.textContent = keys.length;
-        
         if (keys.length === 0) {
-            sessionGallery.innerHTML = '<p style="font-size: 0.7rem; color: #666; text-align: center; margin: 0;">No hay sprites guardados.</p>';
+            sessionGallery.innerHTML = '<p style="font-size: 0.7rem; color: #666; text-align: center;">Vacío.</p>';
             return;
         }
-
         sessionGallery.innerHTML = '';
         keys.forEach(name => {
             const div = document.createElement('div');
             div.className = 'gallery-item';
+            div.innerHTML = `<span>${name}</span><div class="gallery-actions"></div>`;
             
-            const title = document.createElement('span');
-            title.textContent = name;
-
-            const actions = document.createElement('div');
-            actions.className = 'gallery-actions';
-
             const loadBtn = document.createElement('button');
             loadBtn.textContent = '✎';
-            loadBtn.title = 'Editar';
             loadBtn.onclick = () => {
-                if(confirm('¿Cargar al lienzo? Perderás los cambios no guardados del lienzo actual.')) {
-                    pixelBuffer = [...sessionDrawings[name]]; 
-                    renderBufferToScreen();
-                    charNameInput.value = name;
-                }
+                pixelBuffer = [...sessionDrawings[name]]; 
+                renderBufferToScreen();
+                charNameInput.value = name;
             };
 
             const delBtn = document.createElement('button');
             delBtn.textContent = 'X';
             delBtn.className = 'del';
-            delBtn.onclick = () => {
-                delete sessionDrawings[name];
-                updateGalleryUI();
-            };
+            delBtn.onclick = () => { delete sessionDrawings[name]; updateGalleryUI(); };
 
-            actions.appendChild(loadBtn);
-            actions.appendChild(delBtn);
-            div.appendChild(title);
-            div.appendChild(actions);
+            div.querySelector('.gallery-actions').appendChild(loadBtn);
+            div.querySelector('.gallery-actions').appendChild(delBtn);
             sessionGallery.appendChild(div);
         });
     }
 
     saveBtn.addEventListener('click', () => {
-        let name = charNameInput.value.trim();
-        if (!name) {
-            name = "sprite_" + (Object.keys(sessionDrawings).length + 1);
-            charNameInput.value = name;
-        }
-
-        if(pixelBuffer.every(color => color === 'transparent')) {
-            alert("El lienzo está vacío. Dibuja algo antes de guardar.");
-            return;
-        }
-
+        let name = charNameInput.value.trim() || "sprite_" + Date.now().toString().slice(-4);
+        charNameInput.value = name;
         sessionDrawings[name] = [...pixelBuffer];
         updateGalleryUI();
-        
-        saveBtn.textContent = "¡Guardado!";
-        setTimeout(() => saveBtn.textContent = "Guardar en Sesión", 1500);
     });
 
-    // 4. GENERADOR
-    function convertBufferToBlueprint(buffer) {
-        const dynamicPalette = { " ": "transparent" };
-        const blueprintArray = [];
-        let charCodeBase = 65; 
-
-        for (let y = 0; y < gridSize; y++) {
-            let rowStr = '';
-            for (let x = 0; x < gridSize; x++) {
-                const color = buffer[y * gridSize + x];
-                if (color === 'transparent') {
-                    rowStr += ' ';
-                } else {
-                    let char = Object.keys(dynamicPalette).find(k => dynamicPalette[k] === color);
-                    if (!char) {
-                        char = String.fromCharCode(charCodeBase);
-                        dynamicPalette[char] = color;
-                        charCodeBase++; 
-                    }
-                    rowStr += char;
-                }
+    // 4. EXPORTACIÓN A IMAGEN (PNG & SVG)
+    exportPngBtn.addEventListener('click', () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = gridSize; canvas.height = gridSize;
+        const ctx = canvas.getContext('2d');
+        pixelBuffer.forEach((color, i) => {
+            if (color !== 'transparent') {
+                ctx.fillStyle = color;
+                ctx.fillRect(i % gridSize, Math.floor(i / gridSize), 1, 1);
             }
-            blueprintArray.push(rowStr);
-        }
-        return { paleta: dynamicPalette, blueprint: blueprintArray };
-    }
+        });
+        const link = document.createElement('a');
+        link.download = `${charNameInput.value || 'pixelart'}.png`;
+        link.href = canvas.toDataURL();
+        link.click();
+    });
 
+    exportSvgBtn.addEventListener('click', () => {
+        let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${gridSize} ${gridSize}" shape-rendering="crispEdges">`;
+        pixelBuffer.forEach((color, i) => {
+            if (color !== 'transparent') {
+                svg += `<rect x="${i % gridSize}" y="${Math.floor(i / gridSize)}" width="1" height="1" fill="${color}"/>`;
+            }
+        });
+        svg += `</svg>`;
+        const blob = new Blob([svg], {type: 'image/svg+xml'});
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${charNameInput.value || 'pixelart'}.svg`;
+        link.click();
+        URL.revokeObjectURL(url);
+    });
+
+    // 5. EXPORTACIÓN JSON
     generateBtn.addEventListener('click', () => {
-        const finalExport = {};
-        const keys = Object.keys(sessionDrawings);
-
-        if (keys.length === 0) {
-            if(pixelBuffer.every(color => color === 'transparent')) {
-                 alert("No hay nada que exportar.");
-                 return;
-            }
-            finalExport["sprite_actual"] = convertBufferToBlueprint(pixelBuffer);
+        const exportData = {};
+        if (Object.keys(sessionDrawings).length === 0) {
+            exportData["current"] = pixelBuffer;
         } else {
-            keys.forEach(name => {
-                finalExport[name] = convertBufferToBlueprint(sessionDrawings[name]);
-            });
+            Object.assign(exportData, sessionDrawings);
         }
-
-        codeOutput.value = JSON.stringify(finalExport, null, 2);
+        codeOutput.value = JSON.stringify(exportData);
     });
 
 </script>
