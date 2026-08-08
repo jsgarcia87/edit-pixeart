@@ -264,7 +264,10 @@
         </div>
 
         <div class="panel-title" style="margin-top: 10px;">Exportar JSON</div>
-        <button class="action-btn" id="generate-btn" style="background-color: #8bc34a;">Generar Código</button>
+        <div class="export-group">
+            <button class="action-btn" id="generate-btn" style="background-color: #8bc34a;">Código</button>
+            <button class="action-btn" id="export-json-btn" style="background-color: #4CAF50;">Archivo</button>
+        </div>
         <textarea id="code-output" readonly placeholder="JSON aquí..."></textarea>
     </aside>
 
@@ -292,6 +295,7 @@
     const sessionGallery = document.getElementById('session-gallery');
     const sessionCount = document.getElementById('session-count');
     const generateBtn = document.getElementById('generate-btn');
+    const exportJsonBtn = document.getElementById('export-json-btn');
     const codeOutput = document.getElementById('code-output');
     const exportPngBtn = document.getElementById('export-png-btn');
     const exportSvgBtn = document.getElementById('export-svg-btn');
@@ -446,14 +450,29 @@
     });
 
     // 5. EXPORTACIÓN JSON
-    generateBtn.addEventListener('click', () => {
+    function getExportData() {
         const exportData = {};
         if (Object.keys(sessionDrawings).length === 0) {
             exportData["current"] = pixelBuffer;
         } else {
             Object.assign(exportData, sessionDrawings);
         }
-        codeOutput.value = JSON.stringify(exportData);
+        return exportData;
+    }
+
+    generateBtn.addEventListener('click', () => {
+        codeOutput.value = JSON.stringify(getExportData());
+    });
+
+    exportJsonBtn.addEventListener('click', () => {
+        const jsonString = JSON.stringify(getExportData(), null, 2);
+        const blob = new Blob([jsonString], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${charNameInput.value || 'pixelart_session'}.json`;
+        link.click();
+        URL.revokeObjectURL(url);
     });
 
 </script>
