@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Taskoria Pixel Studio v4.0 - Export Edition</title>
+<title>Taskoria Pixel Studio v5.0 - Import & Session Colors</title>
 <style>
     :root {
         --bg-color: #121212;
@@ -188,6 +188,18 @@
         gap: 8px;
     }
 
+    /* Colores de Sesión */
+    #session-colors { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; }
+    .session-swatch {
+        width: 100%; aspect-ratio: 1/1; border: 2px solid #444;
+        border-radius: 3px; cursor: pointer; transition: transform 0.1s, border-color 0.1s;
+    }
+    .session-swatch:hover { transform: scale(1.15); border-color: var(--accent); }
+
+    .import-area {
+        display: flex; flex-direction: column; gap: 8px;
+    }
+
     @media (max-width: 950px) {
         #main-layout { flex-direction: column; align-items: center; }
         .panel { max-width: 650px; }
@@ -197,8 +209,8 @@
 <body>
 
 <header>
-    <h1>Taskoria Pixel Studio v4.0</h1>
-    <p class="subtitle">Advanced Trace & Image Export</p>
+    <h1>Taskoria Pixel Studio v5.0</h1>
+    <p class="subtitle">Import & Session Colors Edition</p>
 </header>
 
 <div id="main-layout">
@@ -236,6 +248,15 @@
             <input type="color" id="custom-color" value="#ff0000">
             <span>Color personalizado</span>
         </div>
+
+        <div class="panel-title" style="margin-top: 10px;">
+            <span>Colores de Sesión</span>
+            <span id="session-colors-count" style="color:#aaa;">0</span>
+        </div>
+        <div id="session-colors">
+            <p id="session-colors-empty" style="font-size: 0.7rem; color: #666; text-align: center; margin: 0; grid-column: 1/-1;">Pinta para añadir colores.</p>
+        </div>
+
         <button class="action-btn secondary" id="clear-btn">Limpiar Lienzo</button>
     </aside>
 
@@ -261,6 +282,12 @@
         </div>
         <div id="session-gallery">
             <p style="font-size: 0.7rem; color: #666; text-align: center; margin: 0;">Vacío.</p>
+        </div>
+
+        <div class="panel-title" style="margin-top: 10px;">Importar JSON</div>
+        <div class="import-area">
+            <input type="file" id="import-json-file" accept=".json" style="font-size: 0.7rem; color: #aaa;">
+            <button class="action-btn" id="import-json-btn" style="background-color: #ff9800;">Importar Archivo</button>
         </div>
 
         <div class="panel-title" style="margin-top: 10px;">Exportar JSON</div>
@@ -300,11 +327,18 @@
     const exportPngBtn = document.getElementById('export-png-btn');
     const exportSvgBtn = document.getElementById('export-svg-btn');
 
+    const importJsonFile = document.getElementById('import-json-file');
+    const importJsonBtn = document.getElementById('import-json-btn');
+    const sessionColorsContainer = document.getElementById('session-colors');
+    const sessionColorsCount = document.getElementById('session-colors-count');
+    const sessionColorsEmpty = document.getElementById('session-colors-empty');
+
     let currentColor = "#000000";
     let isDrawing = false;
     let pixelBuffer = new Array(gridSize * gridSize).fill('transparent');
     const cells = [];
     let sessionDrawings = {};
+    const sessionColors = new Set();
 
     // 0. LÓGICA DE REFERENCIA
     function updateReferenceTransform() {
@@ -329,17 +363,51 @@
     [bgOpacity, bgScale, bgX, bgY].forEach(el => el.addEventListener('input', updateReferenceTransform));
     bgClear.addEventListener('click', () => { refLayer.style.backgroundImage = 'none'; bgUpload.value = ''; });
 
+    // SESSION COLORS
+    function addSessionColor(color) {
+        if (color === 'transparent' || sessionColors.has(color)) return;
+        sessionColors.add(color);
+        sessionColorsCount.textContent = sessionColors.size;
+        if (sessionColorsEmpty) sessionColorsEmpty.remove();
+        const swatch = document.createElement('div');
+        swatch.className = 'session-swatch';
+        swatch.style.backgroundColor = color;
+        swatch.title = color;
+        swatch.addEventListener('click', () => {
+            currentColor = color;
+            document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+        });
+        sessionColorsContainer.appendChild(swatch);
+    }
+
+    function rebuildSessionColors() {
+        sessionColors.clear();
+        sessionColorsContainer.innerHTML = '';
+        const allColors = new Set();
+        pixelBuffer.forEach(c => { if (c !== 'transparent') allColors.add(c); });
+        Object.values(sessionDrawings).forEach(buf => {
+            buf.forEach(c => { if (c !== 'transparent') allColors.add(c); });
+        });
+        if (allColors.size === 0) {
+            sessionColorsCount.textContent = '0';
+            sessionColorsContainer.innerHTML = '<p id="session-colors-empty" style="font-size: 0.7rem; color: #666; text-align: center; margin: 0; grid-column: 1/-1;">Pinta para añadir colores.</p>';
+            return;
+        }
+        allColors.forEach(c => addSessionColor(c));
+    }
+
     // 1. GENERAR CUADRÍCULA
     for (let i = 0; i < gridSize * gridSize; i++) {
         const cell = document.createElement('div');
         cell.classList.add('grid-cell');
-        cell.dataset.index = i; 
+        cell.dataset.index = i;
         gridOverlay.appendChild(cell);
         cells.push(cell);
 
         const paint = () => {
             cell.style.backgroundColor = currentColor;
             pixelBuffer[i] = currentColor;
+            addSessionColor(currentColor);
         };
 
         cell.addEventListener('pointerenter', () => { if (isDrawing) paint(); });
@@ -473,6 +541,48 @@
         link.download = `${charNameInput.value || 'pixelart_session'}.json`;
         link.click();
         URL.revokeObjectURL(url);
+    });
+
+    // 6. IMPORTAR JSON
+    importJsonBtn.addEventListener('click', () => { importJsonFile.click(); });
+
+    importJsonFile.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            try {
+                const data = JSON.parse(event.target.result);
+                if (typeof data !== 'object' || Array.isArray(data)) {
+                    alert('Formato JSON no válido. Se espera un objeto con sprites.');
+                    return;
+                }
+                const keys = Object.keys(data);
+                if (keys.length === 0) {
+                    alert('El archivo JSON está vacío.');
+                    return;
+                }
+                for (const key of keys) {
+                    if (!Array.isArray(data[key]) || data[key].length !== gridSize * gridSize) {
+                        alert(`El sprite "${key}" no tiene el formato correcto (se esperan ${gridSize * gridSize} píxeles).`);
+                        return;
+                    }
+                }
+                sessionDrawings = {};
+                keys.forEach(name => { sessionDrawings[name] = [...data[name]]; });
+                const firstName = keys[0];
+                pixelBuffer = [...sessionDrawings[firstName]];
+                renderBufferToScreen();
+                charNameInput.value = firstName;
+                updateGalleryUI();
+                rebuildSessionColors();
+                codeOutput.value = '';
+            } catch (err) {
+                alert('Error al leer el archivo JSON: ' + err.message);
+            }
+        };
+        reader.readAsText(file);
+        importJsonFile.value = '';
     });
 
 </script>
