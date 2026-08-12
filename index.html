@@ -49,13 +49,22 @@
         position: relative;
         width: 100%;
         max-width: 650px;
-        aspect-ratio: 1 / 1; 
+        aspect-ratio: 1 / 1;
         border: 4px solid #000;
         cursor: crosshair;
         touch-action: none;
         background-color: #12121e;
         box-shadow: 0 0 30px rgba(0,0,0,0.5);
         overflow: hidden;
+    }
+    #image-wrapper.checkerboard-bg {
+        background-image: linear-gradient(45deg, #808080 25%, transparent 25%),
+            linear-gradient(-45deg, #808080 25%, transparent 25%),
+            linear-gradient(45deg, transparent 75%, #808080 75%),
+            linear-gradient(-45deg, transparent 75%, #808080 75%);
+        background-size: 20px 20px;
+        background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        background-color: #c0c0c0;
     }
 
     #reference-layer {
@@ -200,6 +209,28 @@
         display: flex; flex-direction: column; gap: 8px;
     }
 
+    /* Color de Fondo del Lienzo */
+    .canvas-bg-row {
+        display: flex; align-items: center; gap: 8px;
+        justify-content: center; margin-top: 8px;
+    }
+    .canvas-bg-row label { font-size: 0.75rem; color: #aaa; }
+    .bg-preset {
+        width: 24px; height: 24px; border: 2px solid #444;
+        border-radius: 3px; cursor: pointer; transition: transform 0.1s, border-color 0.1s;
+    }
+    .bg-preset:hover { transform: scale(1.15); border-color: var(--accent); }
+    .bg-preset.active-bg { border-color: var(--accent); box-shadow: 0 0 6px rgba(240, 192, 64, 0.5); }
+    .bg-preset.checkerboard {
+        background-image: linear-gradient(45deg, #808080 25%, transparent 25%),
+            linear-gradient(-45deg, #808080 25%, transparent 25%),
+            linear-gradient(45deg, transparent 75%, #808080 75%),
+            linear-gradient(-45deg, transparent 75%, #808080 75%);
+        background-size: 8px 8px;
+        background-position: 0 0, 0 4px, 4px -4px, -4px 0px;
+        background-color: #c0c0c0;
+    }
+
     @media (max-width: 950px) {
         #main-layout { flex-direction: column; align-items: center; }
         .panel { max-width: 650px; }
@@ -260,10 +291,22 @@
         <button class="action-btn secondary" id="clear-btn">Limpiar Lienzo</button>
     </aside>
 
-    <main id="image-wrapper">
-        <div id="reference-layer"></div>
-        <div id="grid-overlay"></div>
-    </main>
+    <div style="display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 650px;">
+        <main id="image-wrapper">
+            <div id="reference-layer"></div>
+            <div id="grid-overlay"></div>
+        </main>
+        <div class="canvas-bg-row">
+            <label>Fondo:</label>
+            <div class="bg-preset active-bg" data-bg="#12121e" style="background-color: #12121e;" title="Oscuro (defecto)"></div>
+            <div class="bg-preset" data-bg="#ffffff" style="background-color: #ffffff;" title="Blanco"></div>
+            <div class="bg-preset" data-bg="#000000" style="background-color: #000000;" title="Negro"></div>
+            <div class="bg-preset" data-bg="#2c2c2c" style="background-color: #2c2c2c;" title="Gris oscuro"></div>
+            <div class="bg-preset" data-bg="#808080" style="background-color: #808080;" title="Gris"></div>
+            <div class="bg-preset checkerboard" data-bg="checkerboard" title="Transparencia"></div>
+            <input type="color" id="canvas-bg-custom" value="#12121e" title="Color personalizado" style="width: 28px; height: 28px; padding: 0; border: 2px solid #444; border-radius: 3px; cursor: pointer; background: none;">
+        </div>
+    </div>
 
     <aside class="panel">
         <div class="panel-title">Guardar Personaje</div>
@@ -333,7 +376,12 @@
     const sessionColorsCount = document.getElementById('session-colors-count');
     const sessionColorsEmpty = document.getElementById('session-colors-empty');
 
+    const canvasBgCustom = document.getElementById('canvas-bg-custom');
+    const imageWrapper = document.getElementById('image-wrapper');
+    const bgPresets = document.querySelectorAll('.bg-preset');
+
     let currentColor = "#000000";
+    let canvasBgColor = '#12121e';
     let isDrawing = false;
     let pixelBuffer = new Array(gridSize * gridSize).fill('transparent');
     const cells = [];
@@ -362,6 +410,30 @@
 
     [bgOpacity, bgScale, bgX, bgY].forEach(el => el.addEventListener('input', updateReferenceTransform));
     bgClear.addEventListener('click', () => { refLayer.style.backgroundImage = 'none'; bgUpload.value = ''; });
+
+    // CANVAS BACKGROUND
+    function setCanvasBg(value) {
+        canvasBgColor = value;
+        imageWrapper.classList.remove('checkerboard-bg');
+        if (value === 'checkerboard') {
+            imageWrapper.classList.add('checkerboard-bg');
+            imageWrapper.style.backgroundColor = '';
+        } else {
+            imageWrapper.style.backgroundColor = value;
+        }
+        bgPresets.forEach(p => p.classList.toggle('active-bg', p.dataset.bg === value));
+    }
+
+    bgPresets.forEach(preset => {
+        preset.addEventListener('click', () => setCanvasBg(preset.dataset.bg));
+    });
+
+    canvasBgCustom.addEventListener('input', (e) => {
+        bgPresets.forEach(p => p.classList.remove('active-bg'));
+        canvasBgColor = e.target.value;
+        imageWrapper.classList.remove('checkerboard-bg');
+        imageWrapper.style.backgroundColor = e.target.value;
+    });
 
     // SESSION COLORS
     function addSessionColor(color) {
@@ -488,6 +560,10 @@
         const canvas = document.createElement('canvas');
         canvas.width = gridSize; canvas.height = gridSize;
         const ctx = canvas.getContext('2d');
+        if (canvasBgColor !== 'checkerboard' && canvasBgColor !== '#12121e') {
+            ctx.fillStyle = canvasBgColor;
+            ctx.fillRect(0, 0, gridSize, gridSize);
+        }
         pixelBuffer.forEach((color, i) => {
             if (color !== 'transparent') {
                 ctx.fillStyle = color;
@@ -502,6 +578,9 @@
 
     exportSvgBtn.addEventListener('click', () => {
         let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${gridSize} ${gridSize}" shape-rendering="crispEdges">`;
+        if (canvasBgColor !== 'checkerboard' && canvasBgColor !== '#12121e') {
+            svg += `<rect width="${gridSize}" height="${gridSize}" fill="${canvasBgColor}"/>`;
+        }
         pixelBuffer.forEach((color, i) => {
             if (color !== 'transparent') {
                 svg += `<rect x="${i % gridSize}" y="${Math.floor(i / gridSize)}" width="1" height="1" fill="${color}"/>`;
