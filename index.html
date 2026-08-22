@@ -288,6 +288,12 @@
             <p id="session-colors-empty" style="font-size: 0.7rem; color: #666; text-align: center; margin: 0; grid-column: 1/-1;">Pinta para añadir colores.</p>
         </div>
 
+        <div class="panel-title" style="margin-top: 10px;">Espejo</div>
+        <div class="export-group">
+            <button class="action-btn secondary" id="mirror-h-btn">&#8596; Horizontal</button>
+            <button class="action-btn secondary" id="mirror-v-btn">&#8597; Vertical</button>
+        </div>
+
         <button class="action-btn secondary" id="clear-btn">Limpiar Lienzo</button>
     </aside>
 
@@ -513,6 +519,29 @@
             pixelBuffer.fill('transparent');
             renderBufferToScreen();
         }
+    });
+
+    // ESPEJO
+    document.getElementById('mirror-h-btn').addEventListener('click', () => {
+        const newBuffer = new Array(gridSize * gridSize);
+        for (let y = 0; y < gridSize; y++) {
+            for (let x = 0; x < gridSize; x++) {
+                newBuffer[y * gridSize + x] = pixelBuffer[y * gridSize + (gridSize - 1 - x)];
+            }
+        }
+        pixelBuffer = newBuffer;
+        renderBufferToScreen();
+    });
+
+    document.getElementById('mirror-v-btn').addEventListener('click', () => {
+        const newBuffer = new Array(gridSize * gridSize);
+        for (let y = 0; y < gridSize; y++) {
+            for (let x = 0; x < gridSize; x++) {
+                newBuffer[y * gridSize + x] = pixelBuffer[(gridSize - 1 - y) * gridSize + x];
+            }
+        }
+        pixelBuffer = newBuffer;
+        renderBufferToScreen();
     });
 
     // 3. GESTIÓN DE SESIÓN
