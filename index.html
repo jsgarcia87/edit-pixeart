@@ -231,6 +231,26 @@
         background-color: #c0c0c0;
     }
 
+    /* Guías de simetría */
+    .symmetry-guide {
+        position: absolute; pointer-events: none; z-index: 3; display: none;
+    }
+    .symmetry-guide-v {
+        left: 50%; top: 0; width: 2px; height: 100%;
+        background: rgba(240, 192, 64, 0.6);
+        box-shadow: 0 0 6px rgba(240, 192, 64, 0.4);
+        transform: translateX(-1px);
+    }
+    .symmetry-guide-h {
+        top: 50%; left: 0; height: 2px; width: 100%;
+        background: rgba(240, 192, 64, 0.6);
+        box-shadow: 0 0 6px rgba(240, 192, 64, 0.4);
+        transform: translateY(-1px);
+    }
+    .action-btn.secondary.mirror-active {
+        background-color: var(--accent); color: #000;
+    }
+
     @media (max-width: 950px) {
         #main-layout { flex-direction: column; align-items: center; }
         .panel { max-width: 650px; }
@@ -288,10 +308,14 @@
             <p id="session-colors-empty" style="font-size: 0.7rem; color: #666; text-align: center; margin: 0; grid-column: 1/-1;">Pinta para añadir colores.</p>
         </div>
 
-        <div class="panel-title" style="margin-top: 10px;">Espejo</div>
+        <div class="panel-title" style="margin-top: 10px;">Simetría (Espejo)</div>
         <div class="export-group">
-            <button class="action-btn secondary" id="mirror-h-btn">&#8596; Horizontal</button>
-            <button class="action-btn secondary" id="mirror-v-btn">&#8597; Vertical</button>
+            <button class="action-btn secondary" id="mirror-h-btn">&#8596; Vertical</button>
+            <button class="action-btn secondary" id="mirror-v-btn">&#8597; Horizontal</button>
+        </div>
+        <div class="export-group">
+            <button class="action-btn secondary" id="flip-h-btn" style="font-size:0.65rem;">Voltear &#8596;</button>
+            <button class="action-btn secondary" id="flip-v-btn" style="font-size:0.65rem;">Voltear &#8597;</button>
         </div>
 
         <button class="action-btn secondary" id="clear-btn">Limpiar Lienzo</button>
@@ -301,6 +325,8 @@
         <main id="image-wrapper">
             <div id="reference-layer"></div>
             <div id="grid-overlay"></div>
+            <div id="guide-v" class="symmetry-guide symmetry-guide-v"></div>
+            <div id="guide-h" class="symmetry-guide symmetry-guide-h"></div>
         </main>
         <div class="canvas-bg-row">
             <label>Fondo:</label>
@@ -386,9 +412,16 @@
     const imageWrapper = document.getElementById('image-wrapper');
     const bgPresets = document.querySelectorAll('.bg-preset');
 
+    const guideV = document.getElementById('guide-v');
+    const guideH = document.getElementById('guide-h');
+    const mirrorHBtn = document.getElementById('mirror-h-btn');
+    const mirrorVBtn = document.getElementById('mirror-v-btn');
+
     let currentColor = "#000000";
     let canvasBgColor = '#12121e';
     let isDrawing = false;
+    let mirrorV = false; // eje vertical (simetría izquierda-derecha)
+    let mirrorH = false; // eje horizontal (simetría arriba-abajo)
     let pixelBuffer = new Array(gridSize * gridSize).fill('transparent');
     const cells = [];
     let sessionDrawings = {};
@@ -475,6 +508,21 @@
     }
 
     // 1. GENERAR CUADRÍCULA
+    function paintAt(idx) {
+        cells[idx].style.backgroundColor = currentColor;
+        pixelBuffer[idx] = currentColor;
+    }
+
+    function paintWithMirror(i) {
+        const x = i % gridSize;
+        const y = Math.floor(i / gridSize);
+        paintAt(i);
+        if (mirrorV) paintAt(y * gridSize + (gridSize - 1 - x));
+        if (mirrorH) paintAt((gridSize - 1 - y) * gridSize + x);
+        if (mirrorV && mirrorH) paintAt((gridSize - 1 - y) * gridSize + (gridSize - 1 - x));
+        addSessionColor(currentColor);
+    }
+
     for (let i = 0; i < gridSize * gridSize; i++) {
         const cell = document.createElement('div');
         cell.classList.add('grid-cell');
@@ -482,15 +530,9 @@
         gridOverlay.appendChild(cell);
         cells.push(cell);
 
-        const paint = () => {
-            cell.style.backgroundColor = currentColor;
-            pixelBuffer[i] = currentColor;
-            addSessionColor(currentColor);
-        };
-
-        cell.addEventListener('pointerenter', () => { if (isDrawing) paint(); });
+        cell.addEventListener('pointerenter', () => { if (isDrawing) paintWithMirror(i); });
         cell.addEventListener('pointerdown', (e) => {
-            isDrawing = true; paint(); cell.releasePointerCapture(e.pointerId);
+            isDrawing = true; paintWithMirror(i); cell.releasePointerCapture(e.pointerId);
         });
     }
 
@@ -521,25 +563,32 @@
         }
     });
 
-    // ESPEJO
-    document.getElementById('mirror-h-btn').addEventListener('click', () => {
+    // SIMETRÍA (ESPEJO EN TIEMPO REAL)
+    function updateMirrorUI() {
+        mirrorHBtn.classList.toggle('mirror-active', mirrorV);
+        mirrorVBtn.classList.toggle('mirror-active', mirrorH);
+        guideV.style.display = mirrorV ? 'block' : 'none';
+        guideH.style.display = mirrorH ? 'block' : 'none';
+    }
+
+    mirrorHBtn.addEventListener('click', () => { mirrorV = !mirrorV; updateMirrorUI(); });
+    mirrorVBtn.addEventListener('click', () => { mirrorH = !mirrorH; updateMirrorUI(); });
+
+    // VOLTEAR (FLIP)
+    document.getElementById('flip-h-btn').addEventListener('click', () => {
         const newBuffer = new Array(gridSize * gridSize);
-        for (let y = 0; y < gridSize; y++) {
-            for (let x = 0; x < gridSize; x++) {
+        for (let y = 0; y < gridSize; y++)
+            for (let x = 0; x < gridSize; x++)
                 newBuffer[y * gridSize + x] = pixelBuffer[y * gridSize + (gridSize - 1 - x)];
-            }
-        }
         pixelBuffer = newBuffer;
         renderBufferToScreen();
     });
 
-    document.getElementById('mirror-v-btn').addEventListener('click', () => {
+    document.getElementById('flip-v-btn').addEventListener('click', () => {
         const newBuffer = new Array(gridSize * gridSize);
-        for (let y = 0; y < gridSize; y++) {
-            for (let x = 0; x < gridSize; x++) {
+        for (let y = 0; y < gridSize; y++)
+            for (let x = 0; x < gridSize; x++)
                 newBuffer[y * gridSize + x] = pixelBuffer[(gridSize - 1 - y) * gridSize + x];
-            }
-        }
         pixelBuffer = newBuffer;
         renderBufferToScreen();
     });
