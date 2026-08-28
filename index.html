@@ -724,18 +724,24 @@
                     return;
                 }
 
-                const keys = Object.keys(data);
-                if (keys.length === 0) {
-                    alert('El archivo JSON está vacío (sin sprites).');
+                // Si el JSON es de otro programa y tiene una propiedad "pixels" o "data" que contiene el array
+                if (data.pixels && Array.isArray(data.pixels)) {
+                    data = { [data.name || "sprite_importado"]: data.pixels };
+                } else if (data.data && Array.isArray(data.data)) {
+                    data = { [data.name || "sprite_importado"]: data.data };
+                }
+
+                let keys = Object.keys(data);
+                
+                // Filtrar solo las propiedades que realmente sean arrays (ignorando posibles metadatos como "name", "width", etc.)
+                const validKeys = keys.filter(key => Array.isArray(data[key]));
+
+                if (validKeys.length === 0) {
+                    alert('No se encontraron arrays de píxeles válidos en el archivo JSON.');
                     return;
                 }
 
-                for (const key of keys) {
-                    if (!Array.isArray(data[key])) {
-                        alert(`El sprite "${key}" no es un array de píxeles válido.`);
-                        return;
-                    }
-                    
+                for (const key of validKeys) {
                     const len = data[key].length;
                     const expectedLen = gridSize * gridSize;
                     
@@ -768,9 +774,9 @@
                 }
 
                 sessionDrawings = {};
-                keys.forEach(name => { sessionDrawings[name] = [...data[name]]; });
+                validKeys.forEach(name => { sessionDrawings[name] = [...data[name]]; });
                 
-                const firstName = keys[0];
+                const firstName = validKeys[0];
                 pixelBuffer = [...sessionDrawings[firstName]];
                 renderBufferToScreen();
                 charNameInput.value = firstName;
