@@ -709,24 +709,67 @@
         const reader = new FileReader();
         reader.onload = function(event) {
             try {
-                const data = JSON.parse(event.target.result);
-                if (typeof data !== 'object' || Array.isArray(data)) {
-                    alert('Formato JSON no válido. Se espera un objeto con sprites.');
+                let data = JSON.parse(event.target.result);
+                
+                if (data === null) {
+                    alert('El archivo JSON está vacío o es nulo.');
                     return;
                 }
+
+                // Compatibilidad con versiones anteriores que exportaban un array directamente
+                if (Array.isArray(data)) {
+                    data = { "sprite_importado": data };
+                } else if (typeof data !== 'object') {
+                    alert('Formato JSON no válido. Se espera un objeto con sprites o un array de píxeles.');
+                    return;
+                }
+
                 const keys = Object.keys(data);
                 if (keys.length === 0) {
-                    alert('El archivo JSON está vacío.');
+                    alert('El archivo JSON está vacío (sin sprites).');
                     return;
                 }
+
                 for (const key of keys) {
-                    if (!Array.isArray(data[key]) || data[key].length !== gridSize * gridSize) {
-                        alert(`El sprite "${key}" no tiene el formato correcto (se esperan ${gridSize * gridSize} píxeles).`);
+                    if (!Array.isArray(data[key])) {
+                        alert(`El sprite "${key}" no es un array de píxeles válido.`);
                         return;
                     }
+                    
+                    const len = data[key].length;
+                    const expectedLen = gridSize * gridSize;
+                    
+                    if (len !== expectedLen) {
+                        const oldSize = Math.sqrt(len);
+                        // Comprobar si es un cuadrado perfecto y se puede escalar fácilmente (ej. de 16 o 32 a 64)
+                        if (Number.isInteger(oldSize) && oldSize > 0 && oldSize <= gridSize && (gridSize % oldSize === 0)) {
+                            const scale = gridSize / oldSize;
+                            const newArray = new Array(expectedLen).fill('transparent');
+                            for (let y = 0; y < oldSize; y++) {
+                                for (let x = 0; x < oldSize; x++) {
+                                    const color = data[key][y * oldSize + x];
+                                    if (color && color !== 'transparent') {
+                                        // Escalar el píxel rellenando un bloque de scale x scale
+                                        for (let sy = 0; sy < scale; sy++) {
+                                            for (let sx = 0; sx < scale; sx++) {
+                                                newArray[(y * scale + sy) * gridSize + (x * scale + sx)] = color;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            data[key] = newArray;
+                            console.log(`Sprite "${key}" escalado de ${oldSize}x${oldSize} a ${gridSize}x${gridSize}`);
+                        } else {
+                            alert(`El sprite "${key}" tiene un tamaño incompatible (${len} píxeles). Se esperan ${expectedLen} (${gridSize}x${gridSize}).`);
+                            return;
+                        }
+                    }
                 }
+
                 sessionDrawings = {};
                 keys.forEach(name => { sessionDrawings[name] = [...data[name]]; });
+                
                 const firstName = keys[0];
                 pixelBuffer = [...sessionDrawings[firstName]];
                 renderBufferToScreen();
