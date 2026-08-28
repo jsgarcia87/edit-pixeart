@@ -724,6 +724,24 @@
                     return;
                 }
 
+                // Soporte para formato "Blueprint" (Taskoria Character Library)
+                if (data.payload && data.payload.paleta && data.payload.blueprint) {
+                    const paleta = data.payload.paleta;
+                    const blueprint = data.payload.blueprint;
+                    const pixelArray = new Array(gridSize * gridSize).fill('transparent');
+                    
+                    for (let y = 0; y < blueprint.length && y < gridSize; y++) {
+                        const row = blueprint[y];
+                        for (let x = 0; x < row.length && x < gridSize; x++) {
+                            const char = row[x];
+                            if (paleta[char]) {
+                                pixelArray[y * gridSize + x] = paleta[char];
+                            }
+                        }
+                    }
+                    data = { [data.name || "sprite_importado"]: pixelArray };
+                }
+
                 // Si el JSON es de otro programa y tiene una propiedad "pixels" o "data" que contiene el array
                 if (data.pixels && Array.isArray(data.pixels)) {
                     data = { [data.name || "sprite_importado"]: data.pixels };
