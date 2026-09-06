@@ -251,6 +251,31 @@
         background-color: var(--accent); color: #000;
     }
 
+    /* Capa de fusión */
+    #merge-overlay {
+        position: absolute; top: 0; left: 0; z-index: 4;
+        pointer-events: none; image-rendering: pixelated;
+        opacity: 0.75; display: none;
+    }
+    #merge-controls {
+        display: none; background: var(--panel-bg); border: 2px solid var(--accent);
+        border-radius: 8px; padding: 12px; margin-top: 8px;
+        flex-direction: column; gap: 8px; width: 100%; max-width: 650px;
+    }
+    #merge-controls .slider-row label { width: 65px; }
+    #merge-controls.active { display: flex; }
+
+    /* Reemplazo de colores */
+    .color-replace-row {
+        display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #aaa;
+    }
+    .color-replace-row input[type="color"] { width: 28px; height: 28px; }
+    .color-replace-swatch {
+        width: 24px; height: 24px; border: 2px solid #666; border-radius: 3px;
+        cursor: pointer; display: inline-block;
+    }
+    .color-replace-swatch.selected { border-color: var(--accent); box-shadow: 0 0 6px rgba(240,192,64,0.5); }
+
     @media (max-width: 950px) {
         #main-layout { flex-direction: column; align-items: center; }
         .panel { max-width: 650px; }
@@ -308,6 +333,16 @@
             <p id="session-colors-empty" style="font-size: 0.7rem; color: #666; text-align: center; margin: 0; grid-column: 1/-1;">Pinta para añadir colores.</p>
         </div>
 
+        <div class="panel-title" style="margin-top: 10px;">Reemplazar Color</div>
+        <div class="color-replace-row">
+            <span>De:</span>
+            <div id="replace-from-preview" class="color-replace-swatch" style="background:#000;" title="Clic en un pixel del lienzo para seleccionar"></div>
+            <span>A:</span>
+            <input type="color" id="replace-to-color" value="#ff0000">
+            <button class="action-btn" id="replace-color-btn" style="width:auto; padding:6px 10px; font-size:0.65rem;">Aplicar</button>
+        </div>
+        <p style="font-size:0.6rem; color:#555; margin:0;">Clic derecho en el lienzo = seleccionar color origen</p>
+
         <div class="panel-title" style="margin-top: 10px;">Simetría (Espejo)</div>
         <div class="export-group">
             <button class="action-btn secondary" id="mirror-h-btn">&#8596; Vertical</button>
@@ -327,6 +362,7 @@
             <div id="grid-overlay"></div>
             <div id="guide-v" class="symmetry-guide symmetry-guide-v"></div>
             <div id="guide-h" class="symmetry-guide symmetry-guide-h"></div>
+            <canvas id="merge-overlay" width="64" height="64"></canvas>
         </main>
         <div class="canvas-bg-row">
             <label>Fondo:</label>
@@ -337,6 +373,19 @@
             <div class="bg-preset" data-bg="#808080" style="background-color: #808080;" title="Gris"></div>
             <div class="bg-preset checkerboard" data-bg="checkerboard" title="Transparencia"></div>
             <input type="color" id="canvas-bg-custom" value="#12121e" title="Color personalizado" style="width: 28px; height: 28px; padding: 0; border: 2px solid #444; border-radius: 3px; cursor: pointer; background: none;">
+        </div>
+        <div id="merge-controls">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="color:var(--accent); font-size:0.8rem; font-weight:bold; text-transform:uppercase; letter-spacing:1px;">Fusionar Sprite</span>
+                <span id="merge-sprite-name" style="color:#8bc34a; font-size:0.75rem; font-family:monospace;"></span>
+            </div>
+            <div class="slider-row"><label>Pos X:</label><input type="range" id="merge-x" min="-32" max="64" step="1" value="0"></div>
+            <div class="slider-row"><label>Pos Y:</label><input type="range" id="merge-y" min="-32" max="64" step="1" value="0"></div>
+            <div class="slider-row"><label>Escala:</label><input type="range" id="merge-scale" min="25" max="400" step="25" value="100"><span id="merge-scale-label" style="min-width:30px;text-align:right;">100%</span></div>
+            <div class="export-group">
+                <button class="action-btn" id="merge-apply-btn" style="background-color:#4CAF50;">Aplicar</button>
+                <button class="action-btn secondary" id="merge-cancel-btn">Cancelar</button>
+            </div>
         </div>
     </div>
 
@@ -363,6 +412,8 @@
         <div class="import-area">
             <input type="file" id="import-json-file" accept=".json" style="font-size: 0.7rem; color: #aaa;">
             <button class="action-btn" id="import-json-btn" style="background-color: #ff9800;">Importar Archivo</button>
+            <input type="file" id="merge-json-file" accept=".json" style="display:none;">
+            <button class="action-btn" id="merge-json-btn" style="background-color: #e91e63;">Fusionar Sprite</button>
         </div>
 
         <div class="panel-title" style="margin-top: 10px;">Exportar JSON</div>
@@ -408,6 +459,14 @@
     const sessionColorsCount = document.getElementById('session-colors-count');
     const sessionColorsEmpty = document.getElementById('session-colors-empty');
 
+    const mergeOverlay = document.getElementById('merge-overlay');
+    const mergeControls = document.getElementById('merge-controls');
+    const mergeJsonFile = document.getElementById('merge-json-file');
+    const mergeJsonBtn = document.getElementById('merge-json-btn');
+    const replaceFromPreview = document.getElementById('replace-from-preview');
+    const replaceToColor = document.getElementById('replace-to-color');
+    const replaceColorBtn = document.getElementById('replace-color-btn');
+
     const canvasBgCustom = document.getElementById('canvas-bg-custom');
     const imageWrapper = document.getElementById('image-wrapper');
     const bgPresets = document.querySelectorAll('.bg-preset');
@@ -420,8 +479,11 @@
     let currentColor = "#000000";
     let canvasBgColor = '#12121e';
     let isDrawing = false;
-    let mirrorV = false; // eje vertical (simetría izquierda-derecha)
-    let mirrorH = false; // eje horizontal (simetría arriba-abajo)
+    let mirrorV = false;
+    let mirrorH = false;
+    let replaceFromColor = '#000000';
+    let mergeBuffer = null;
+    let mergeSourceSize = 64;
     let pixelBuffer = new Array(gridSize * gridSize).fill('transparent');
     const cells = [];
     let sessionDrawings = {};
@@ -606,22 +668,28 @@
             const div = document.createElement('div');
             div.className = 'gallery-item';
             div.innerHTML = `<span>${name}</span><div class="gallery-actions"></div>`;
-            
             const loadBtn = document.createElement('button');
             loadBtn.textContent = '✎';
+            loadBtn.title = 'Cargar';
             loadBtn.onclick = () => {
-                pixelBuffer = [...sessionDrawings[name]]; 
+                pixelBuffer = [...sessionDrawings[name]];
                 renderBufferToScreen();
                 charNameInput.value = name;
             };
-
+            const mergeBtn = document.createElement('button');
+            mergeBtn.textContent = '+';
+            mergeBtn.title = 'Fusionar sobre lienzo';
+            mergeBtn.onclick = () => {
+                startMerge({ name, buffer: [...sessionDrawings[name]], size: gridSize });
+            };
             const delBtn = document.createElement('button');
             delBtn.textContent = 'X';
             delBtn.className = 'del';
             delBtn.onclick = () => { delete sessionDrawings[name]; updateGalleryUI(); };
-
-            div.querySelector('.gallery-actions').appendChild(loadBtn);
-            div.querySelector('.gallery-actions').appendChild(delBtn);
+            const actions = div.querySelector('.gallery-actions');
+            actions.appendChild(loadBtn);
+            actions.appendChild(mergeBtn);
+            actions.appendChild(delBtn);
             sessionGallery.appendChild(div);
         });
     }
@@ -826,6 +894,166 @@
         reader.readAsText(file);
         importJsonFile.value = '';
     });
+
+    // 7. REEMPLAZO RÁPIDO DE COLORES
+    gridOverlay.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        const cell = e.target;
+        if (!cell.classList.contains('grid-cell')) return;
+        const idx = parseInt(cell.dataset.index);
+        const color = pixelBuffer[idx];
+        if (color && color !== 'transparent') {
+            replaceFromColor = color;
+            replaceFromPreview.style.backgroundColor = color;
+            replaceFromPreview.title = color;
+        }
+    });
+
+    replaceColorBtn.addEventListener('click', () => {
+        const from = replaceFromColor;
+        const to = replaceToColor.value;
+        if (from === to) return;
+        let count = 0;
+        pixelBuffer.forEach((c, i) => {
+            if (c === from) { pixelBuffer[i] = to; count++; }
+        });
+        if (count > 0) {
+            renderBufferToScreen();
+            rebuildSessionColors();
+        }
+    });
+
+    // 8. FUSIONAR SPRITES
+    function parseJsonToBuffer(raw) {
+        let data = JSON.parse(raw);
+        if (data === null || typeof data !== 'object') return null;
+        if (Array.isArray(data)) data = { sprite: data };
+        const bpKeys = Object.keys(data).filter(k => data[k] && typeof data[k] === 'object' && !Array.isArray(data[k]) && data[k].paleta && data[k].blueprint);
+        if (bpKeys.length > 0) {
+            const name = bpKeys[0];
+            const paleta = data[name].paleta;
+            const bp = data[name].blueprint;
+            const size = bp.length;
+            const arr = new Array(size * size).fill('transparent');
+            for (let y = 0; y < size; y++) {
+                const row = bp[y];
+                for (let x = 0; x < row.length && x < size; x++) {
+                    if (paleta[row[x]]) arr[y * size + x] = paleta[row[x]];
+                }
+            }
+            return { name, buffer: arr, size };
+        }
+        const keys = Object.keys(data).filter(k => Array.isArray(data[k]));
+        if (keys.length === 0) return null;
+        const name = keys[0];
+        const buf = data[name];
+        const size = Math.round(Math.sqrt(buf.length));
+        return { name, buffer: buf, size };
+    }
+
+    function renderMergeOverlay() {
+        if (!mergeBuffer) return;
+        const ox = parseInt(document.getElementById('merge-x').value);
+        const oy = parseInt(document.getElementById('merge-y').value);
+        const scale = parseInt(document.getElementById('merge-scale').value) / 100;
+        const scaledSize = Math.round(mergeSourceSize * scale);
+        const canvas = mergeOverlay;
+        canvas.width = gridSize; canvas.height = gridSize;
+        canvas.style.width = '100%'; canvas.style.height = '100%';
+        canvas.style.display = 'block';
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, gridSize, gridSize);
+        for (let sy = 0; sy < scaledSize; sy++) {
+            for (let sx = 0; sx < scaledSize; sx++) {
+                const srcX = Math.floor(sx / scale);
+                const srcY = Math.floor(sy / scale);
+                if (srcX >= mergeSourceSize || srcY >= mergeSourceSize) continue;
+                const color = mergeBuffer[srcY * mergeSourceSize + srcX];
+                if (color && color !== 'transparent') {
+                    const dx = ox + sx;
+                    const dy = oy + sy;
+                    if (dx >= 0 && dx < gridSize && dy >= 0 && dy < gridSize) {
+                        ctx.fillStyle = color;
+                        ctx.fillRect(dx, dy, 1, 1);
+                    }
+                }
+            }
+        }
+    }
+
+    function startMerge(parsed) {
+        mergeBuffer = parsed.buffer;
+        mergeSourceSize = parsed.size;
+        document.getElementById('merge-sprite-name').textContent = parsed.name;
+        document.getElementById('merge-x').value = 0;
+        document.getElementById('merge-y').value = 0;
+        document.getElementById('merge-scale').value = 100;
+        document.getElementById('merge-scale-label').textContent = '100%';
+        mergeControls.classList.add('active');
+        renderMergeOverlay();
+    }
+
+    function endMerge() {
+        mergeBuffer = null;
+        mergeControls.classList.remove('active');
+        mergeOverlay.style.display = 'none';
+    }
+
+    mergeJsonBtn.addEventListener('click', () => { mergeJsonFile.click(); });
+
+    mergeJsonFile.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            try {
+                const parsed = parseJsonToBuffer(ev.target.result);
+                if (!parsed) { alert('No se pudo leer el sprite del archivo.'); return; }
+                startMerge(parsed);
+            } catch (err) { alert('Error: ' + err.message); }
+        };
+        reader.readAsText(file);
+        mergeJsonFile.value = '';
+    });
+
+    ['merge-x', 'merge-y', 'merge-scale'].forEach(id => {
+        document.getElementById(id).addEventListener('input', () => {
+            if (id === 'merge-scale') {
+                document.getElementById('merge-scale-label').textContent = document.getElementById(id).value + '%';
+            }
+            renderMergeOverlay();
+        });
+    });
+
+    document.getElementById('merge-apply-btn').addEventListener('click', () => {
+        if (!mergeBuffer) return;
+        const ox = parseInt(document.getElementById('merge-x').value);
+        const oy = parseInt(document.getElementById('merge-y').value);
+        const scale = parseInt(document.getElementById('merge-scale').value) / 100;
+        const scaledSize = Math.round(mergeSourceSize * scale);
+        for (let sy = 0; sy < scaledSize; sy++) {
+            for (let sx = 0; sx < scaledSize; sx++) {
+                const srcX = Math.floor(sx / scale);
+                const srcY = Math.floor(sy / scale);
+                if (srcX >= mergeSourceSize || srcY >= mergeSourceSize) continue;
+                const color = mergeBuffer[srcY * mergeSourceSize + srcX];
+                if (color && color !== 'transparent') {
+                    const dx = ox + sx;
+                    const dy = oy + sy;
+                    if (dx >= 0 && dx < gridSize && dy >= 0 && dy < gridSize) {
+                        const idx = dy * gridSize + dx;
+                        pixelBuffer[idx] = color;
+                        cells[idx].style.backgroundColor = color;
+                        addSessionColor(color);
+                    }
+                }
+            }
+        }
+        endMerge();
+    });
+
+    document.getElementById('merge-cancel-btn').addEventListener('click', endMerge);
+
 
 </script>
 </body>
